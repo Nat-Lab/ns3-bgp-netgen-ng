@@ -4,7 +4,10 @@
   "description": "The next generation script generator for ns3-bgp.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node_modules/.bin/webpack-dev-server --config webpack.dev.js --mode development --open",
+    "build": "node_modules/.bin/webpack --config webpack.prod.js --mode production",
+    "serve": "node_modules/.bin/http-server ./dist"
   },
   "repository": {
     "type": "git",
@@ -17,6 +20,31 @@
   },
   "homepage": "https://github.com/nat-lab/ns3-bgp-netgen-ng#readme",
   "dependencies": {
-    "djv": "^2.1.2"
+    "bootstrap": "^3.3.7",
+    "codemirror": "^5.46.0",
+    "debounce": "^1.2.0",
+    "djv": "^2.1.2",
+    "json-beautify": "^1.1.0",
+    "react": "^16.8.6",
+    "react-codemirror2": "^6.0.0",
+    "react-dom": "^16.8.6",
+    "react-jsonschema-form": "^1.5.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.4.4",
+    "@babel/preset-env": "^7.4.4",
+    "@babel/preset-react": "^7.0.0",
+    "babel-loader": "^8.0.6",
+    "clean-webpack-plugin": "^2.0.2",
+    "css-loader": "^2.1.1",
+    "file-loader": "^3.0.1",
+    "html-loader": "^0.5.5",
+    "html-webpack-plugin": "^3.2.0",
+    "style-loader": "^0.23.1",
+    "url-loader": "^1.1.2",
+    "webpack": "^4.31.0",
+    "webpack-cli": "^3.3.2",
+    "webpack-dev-server": "^3.4.0",
+    "webpack-merge": "^4.2.1"
   }
 }

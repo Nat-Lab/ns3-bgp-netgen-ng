@@ -1,6 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
-    "title": "ns3-bgp-netgen-ng Schema",
+    "$id": "http://json-schema.org/draft-04/schema#",
+    "title": "ns3-bgp-netgen-ng",
     "type": "object",
     "properties": {
         "options": {
@@ -52,6 +53,7 @@
                             },
                             "mode": {
                                 "type": "string",
+                                "enum": ["ConfigureLocal", "UseLocal", "UseBridge"],
                                 "description": "Mode of the TapBridge to use. See https://www.nsnam.org/docs/release/3.29/models/html/tap.html."
                             },
                             "address": {
@@ -59,7 +61,11 @@
                                 "description": "IPv4 address of the Tap Interface in CIDR notation."
                             }
                         },
-                        "required": ["enabled", "name", "mode", "address"]
+                        "dependencies": {
+                            "enabled": {
+                                "required": ["name", "mode", "address"]
+                            }
+                        }
                     }
                 },
                 "required": ["id", "instance_id"]

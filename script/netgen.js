@@ -1,5 +1,7 @@
-var NetGen = async function () {
-    const schema_url = '/res/netgen-conf-schema.json';
+import schema from '../res/netgen-conf-schema';
+import djv from 'djv';
+
+var NetGen = (function () {
     const r_ipv4 = /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/;
     const r_cidr = /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$/;
 
@@ -24,25 +26,11 @@ var NetGen = async function () {
     };
 
     var EUI48AddressGenerator = function () {
-        counter = 1;
+        var counter = 1;
         return function () {
             return ('00'.repeat(6) + (counter++).toString(16)).slice(-12).match( /../g ).join(':');
         };
     };
-
-    var load_schema = function () {
-        return new Promise((resolve, reject) => {
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', schema_url);
-            xhr.send();
-            xhr.onload = function () {
-                if (this.status == 200) resolve(JSON.parse(xhr.responseText));
-                else reject(xhr.statusText);
-            };
-        });
-    };
-
-    var schema = await load_schema();
 
     const djv_env = new djv();
     djv_env.addSchema('netgen-conf', schema);
@@ -390,4 +378,6 @@ var NetGen = async function () {
     return {
         check: preprocess, generate
     };
-};
+})();
+
+export default NetGen;
