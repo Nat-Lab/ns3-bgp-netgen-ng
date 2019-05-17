@@ -54,7 +54,7 @@ var NetGen = (function () {
                 if (nets.includes(network.id)) errors.push(`Dulipicated network id "${network.id}" at ${path}.`);
                 else nets.push(network.id);
 
-                if (network.tap) {
+                if (network.tap && network.tap.enabled) {
                     if(!r_cidr.test(network.tap.address)) 
                         errors.push(`Invalid TAP address "${network.tap.address}" at ${path}.tap.`); 
                 }
