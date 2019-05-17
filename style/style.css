@@ -16,6 +16,7 @@ body {
 
 .ctrl_but {
     margin-right: 1em;
+    margin-bottom: 1em;
 }
 
 button[type="submit"] {
@@ -29,9 +30,17 @@ button[type="submit"] {
 }
 
 .form-group {
-    margin-left: 2em;
-    border-left: solid 3px #aaa;
-    padding-left: 1em;
+    margin: .5em;
+    border: solid 1px #333;
+    padding: .5em;
+}
+
+.array-item-toolbox {
+    padding-right: 1em;
+}
+
+legend {
+    margin-bottom: 10px;
 }
 
 @media (max-width: 992px) {
@@ -41,3 +50,6 @@ button[type="submit"] {
     }
 }
 
+* {
+    border-radius: 0 !important;
+}

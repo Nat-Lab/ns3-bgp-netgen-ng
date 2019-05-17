@@ -12,7 +12,6 @@ import 'codemirror/lib/codemirror.css';
 
 require('codemirror/mode/javascript/javascript');
 
-
 class App extends Component {
     constructor(props) {
         super(props);

@@ -248,9 +248,9 @@
                             "required": ["prefix", "device"]
                         }
                     }
-                }
-            },
-            "required": ["id", "instance_id", "asn"]
+                },
+                "required": ["id", "instance_id", "asn"]
+            }
         }
     }
 }
