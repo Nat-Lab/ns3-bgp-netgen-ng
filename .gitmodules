@@ -1,0 +1,4 @@
+[submodule "third-party/docson"]
+	path = third-party/docson
+	url = https://github.com/lbovet/docson
+	branch = gh-pages
