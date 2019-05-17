@@ -1,15 +1,13 @@
 {
-	"$schema": "http://json-schema.org/draft-04/schema#",
-	"title": "ns3-bgp-netgen-ng Schema",
-	"type": "object",
-	"additionalProperties": false,
-	"properties": {
-		"options": {
-			"type": "object",
-            "additionalProperties": false,
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "title": "ns3-bgp-netgen-ng Schema",
+    "type": "object",
+    "properties": {
+        "options": {
+            "type": "object",
             "description": "The options object specify options for the simulation.",
-			"properties": {
-				"log": {
+            "properties": {
+                "log": {
                     "type": "array",
                     "description": "List of log components to be enabled.",
                     "additionalItems": false,
@@ -17,16 +15,15 @@
                         "type": "string",
                         "description": "Name of the log component."
                     }
-				}
-			}
-		},
-		"networks": {
-			"type": "array",
+                }
+            }
+        },
+        "networks": {
+            "type": "array",
             "additionalItems": false,
             "description": "List of networks in the simulation.",
-			"items": {
+            "items": {
                 "type": "object",
-                "additionalProperties": false,
                 "description": "A network object defines a CSMA network.",
                 "properties": {
                     "id": {
@@ -43,7 +40,6 @@
                     },
                     "tap": {
                         "type": "object",
-                        "additionalProperties": false,
                         "description": "A TAP object specifies the configuration of a TapBridge.",
                         "properties": {
                             "enabled": {
@@ -67,15 +63,14 @@
                     }
                 },
                 "required": ["id", "instance_id"]
-			}
+            }
         },
         "routers": {
-			"type": "array",
+            "type": "array",
             "additionalItems": false,
             "description": "List of routers in the simulation.",
-			"items": {
+            "items": {
                 "type": "object",
-                "additionalProperties": false,
                 "description": "A router object define a Node.",
                 "properties": {
                     "id": {
@@ -96,7 +91,6 @@
                         "description": "List of network devices to attach to this router.",
                         "items": {
                             "type": "object",
-                            "additionalProperties": false,
                             "description": "A device object represents a NetDevice.",
                             "properties": {
                                 "id": {
@@ -126,7 +120,6 @@
                         "description": "List of BGP neighbors of this router.",
                         "items": {
                             "type": "object",
-                            "additionalProperties": false,
                             "description": "A Peer object represents a BGP neighbor.",
                             "properties": {
                                 "address": {
@@ -144,7 +137,6 @@
                                 "in_filter": {
                                     "type": "object",
                                     "description": "Ingress route filter for this neighbor.",
-                                    "additionalProperties": false,
                                     "properties": {
                                         "default_action": {
                                             "type": "string",
@@ -157,7 +149,6 @@
                                             "items": {
                                                 "type": "object",
                                                 "description": "A filter object define a filter rule.",
-                                                "additionalProperties": false,
                                                 "properties": {
                                                     "prefix": {
                                                         "type": "string",
@@ -182,7 +173,6 @@
                                 "out_filter": {
                                     "type": "object",
                                     "description": "Egress route filter for this neighbor.",
-                                    "additionalProperties": false,
                                     "properties": {
                                         "default_action": {
                                             "type": "string",
@@ -195,7 +185,6 @@
                                             "items": {
                                                 "type": "object",
                                                 "description": "A filter object define a filter rule.",
-                                                "additionalProperties": false,
                                                 "properties": {
                                                     "prefix": {
                                                         "type": "string",
@@ -231,7 +220,6 @@
                         "description": "List of routes to install to NLRI.",
                         "items": {
                             "type": "object",
-                            "additionalProperties": false,
                             "description": "A route object represents a route.",
                             "properties": {
                                 "prefix": {

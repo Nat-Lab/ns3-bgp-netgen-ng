@@ -1,0 +1,22 @@
+{
+  "name": "ns3-bgp-netgen-ng",
+  "version": "0.0.1",
+  "description": "The next generation script generator for ns3-bgp.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/nat-lab/ns3-bgp-netgen-ng.git"
+  },
+  "author": "Honghao Zeng <hozeng@syr.edu>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nat-lab/ns3-bgp-netgen-ng/issues"
+  },
+  "homepage": "https://github.com/nat-lab/ns3-bgp-netgen-ng#readme",
+  "dependencies": {
+    "djv": "^2.1.2"
+  }
+}
