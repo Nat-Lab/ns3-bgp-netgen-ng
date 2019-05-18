@@ -235,7 +235,7 @@ var NetGen = (function () {
             code.indent();
 
             code.print('// begin nets setup.');
-            conf.networks.filter(net => net.instance_id == instance).forEach(net => {
+            if (conf.networks) conf.networks.filter(net => net.instance_id == instance).forEach(net => {
                 code.print(`Ptr<CsmaChannel> net_${net.id} = CreateObject<CsmaChannel> ();`);
                 if (net.tap && net.tap.mode) {
                     var tap_name = `tap_${net.id}`;
@@ -254,7 +254,7 @@ var NetGen = (function () {
             code.print('// end nets.');
 
             code.print('// begin routers.');
-            conf.routers.filter(router => router.instance_id == instance).forEach(router => {
+            if (conf.routers) conf.routers.filter(router => router.instance_id == instance).forEach(router => {
                 code.print(`// begin router ${router.id} setup.`);
                 var router_name = `router_${router.id}`;
                 code.print(`Ptr<Node> ${router_name} = CreateObject<Node> ();`);
