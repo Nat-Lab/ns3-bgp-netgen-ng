@@ -64,9 +64,6 @@ legend {
 
 * {
     border-radius: 0 !important;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
 }
 
 input[type=number]::-webkit-inner-spin-button, 
