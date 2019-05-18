@@ -9,43 +9,25 @@ import Debounce from 'debounce';
 import 'bootstrap/dist/css/bootstrap.css';
 import 'codemirror/lib/codemirror.css';
 
-
 require('codemirror/mode/javascript/javascript');
+require('codemirror/mode/clike/clike')
 
 class App extends Component {
     constructor(props) {
         super(props);
         this.state = {
             data: {},
-            errors: 'No problems has been detected so far.',
+            errors: 'Compiler ready. Click "Compile to JSON" to check for errors.',
+            code: ''
         };
         this.buffer = '{}';
-        this.checker = () => {
-            try {
-                var rslt = NetGen.check(JSON.parse(JSON.stringify(this.state.data)));
-                if (rslt.ok) this.setState({errors: 'No problems has been detected so far.'});
-                else {
-                    this.setState({errors: rslt.errors.join('\n')});
-                }
-            } catch (e) {
-                this.state.errors = e;
-            }
-        };
-        this.checker_id = -1;
-    }
-
-    componentDidMount() {
-        this.checker_id = window.setInterval(() => this.checker(), 1000);
-    }
-
-    componentWillUnmount() {
-        window.clearInterval(this.checker_id);
     }
 
     render() {
         return (
             <div className="row">
                 <div className="col-md-8 col-sm-12 editor">
+                <legend>editor</legend>
                     <Form 
                         schema={schema} 
                         onChange={data => {
@@ -55,7 +37,7 @@ class App extends Component {
                     />
                 </div>
                 <div className="col-md-4 col-sm-12 right-panel">
-                    <legend>JSON source</legend>
+                    <legend>JSON</legend>
                     <CodeMirror
                         className="code"
                         value={Beautify(this.state.data, null, 4, 80)}
@@ -64,7 +46,6 @@ class App extends Component {
                             this.buffer = value;
                         }}
                     />
-                    <legend>controls</legend>
                     <button 
                         type="button" 
                         className="ctrl_but"
@@ -72,12 +53,33 @@ class App extends Component {
                             try {
                                 var import_data = JSON.parse(this.buffer);
                                 this.setState({data: import_data});
-                                this.setState({errors: 'No problems has been detected so far.'});
                             } catch (e) {
                                 this.setState({errors: e.toString()});
                             }
                         }}
                     >Load JSON to editor</button>
+                    <legend>script</legend>
+                    <CodeMirror
+                        className="code"
+                        value={this.state.code}
+                        options={{mode: 'clike', theme: 'default', lineNumbers: true, readOnly: true}} 
+                        
+                    />
+                    <button 
+                        type="button" 
+                        className="ctrl_but"
+                        onClick={() => {
+                            try {
+                                var obj = JSON.parse(this.buffer);
+                                var rslt = NetGen.generate(obj);
+                                if (rslt.ok) {
+                                    this.setState({errors: 'No problems has been detected so far.', code: rslt.code});
+                                } else this.setState({errors: rslt.errors.join('\n')});
+                            } catch (e) {
+                                this.setState({errors: e.toString()});
+                            }
+                        }}
+                    >Compile from JSON</button>
                     <button 
                         type="button" 
                         className="ctrl_but"
@@ -98,7 +100,6 @@ class App extends Component {
                             } catch (e) {
                                 this.setState({errors: e.toString()});
                             }
-                            
                         }}
                     >Download script</button>
                     <button 
@@ -114,8 +115,7 @@ class App extends Component {
                             anchor.click();
                             anchor.remove();
                         }}
-                    >Download JSON source</button>
-                    <legend>console</legend>
+                    >Download JSON</button>
                     <pre>{this.state.errors}</pre>
                 </div>
             </div>

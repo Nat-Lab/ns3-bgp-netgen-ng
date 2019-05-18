@@ -43,18 +43,14 @@
                         "type": "object",
                         "description": "A TAP object specifies the configuration of a TapBridge.",
                         "properties": {
-                            "enabled": {
-                                "type": "boolean",
-                                "description": "Enable TapBridge on this network?"
+                            "mode": {
+                                "type": "string",
+                                "enum": ["ConfigureLocal", "UseLocal", "UseBridge"],
+                                "description": "Mode of the TapBridge to use. ('ConfigureLocal', 'UseLocal', or, 'UseBridge') Set mode to an non-empty value will eanble tapBridge on this network."
                             },
                             "name": {
                                 "type": "string",
                                 "description": "The name of the TAP interface."
-                            },
-                            "mode": {
-                                "type": "string",
-                                "enum": ["ConfigureLocal", "UseLocal", "UseBridge"],
-                                "description": "Mode of the TapBridge to use. See https://www.nsnam.org/docs/release/3.29/models/html/tap.html."
                             },
                             "address": {
                                 "type": "string",
@@ -62,8 +58,8 @@
                             }
                         },
                         "dependencies": {
-                            "enabled": {
-                                "required": ["name", "mode", "address"]
+                            "mode": {
+                                "required": ["name", "address"]
                             }
                         }
                     }

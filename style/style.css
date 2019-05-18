@@ -12,6 +12,7 @@ body {
 
 .code {
     border: solid 1px #333;
+    margin-bottom: 1em;
 }
 
 .ctrl_but {

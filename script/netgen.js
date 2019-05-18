@@ -54,7 +54,7 @@ var NetGen = (function () {
                 if (nets.includes(network.id)) errors.push(`Dulipicated network id "${network.id}" at ${path}.`);
                 else nets.push(network.id);
 
-                if (network.tap && network.tap.enabled) {
+                if (network.tap && network.tap.mode) {
                     if(!r_cidr.test(network.tap.address)) 
                         errors.push(`Invalid TAP address "${network.tap.address}" at ${path}.tap.`); 
                 }
@@ -237,7 +237,7 @@ var NetGen = (function () {
             code.print('// begin nets setup.');
             conf.networks.filter(net => net.instance_id == instance).forEach(net => {
                 code.print(`Ptr<CsmaChannel> net_${net.id} = CreateObject<CsmaChannel> ();`);
-                if (net.tap && net.tap.enabled) {
+                if (net.tap && net.tap.mode) {
                     var tap_name = `tap_${net.id}`;
 
                     code.print(`// begin tap for net ${net.id}.`);
@@ -284,7 +284,7 @@ var NetGen = (function () {
                         var peer_dev_info = devices_info.filter(info => info.friendly_name == peer_dev)[0];
                         var { interface_id } = peer_dev_info;
                         var filter_name = `filter_${router.id}_peer${peer_id}`;
-                        var has_filters = (peer.in_filter && peer.in_filter.filter) || (peer.out_filter && peer.out_filter.filter);
+                        var has_filters = (peer.in_filter && (peer.in_filter.filter || peer.in_filter.default_action)) || (peer.out_filter && (peer.out_filter.filter || peer.out_filter.default_action));
                         code.print(`${has_filters ? `auto ${filter_name} = ` : ''}${bgp_app}.AddPeer (Ipv4Address ("${peer.address}"), ${peer.asn}, ${interface_id}, ${peer.passive ? "true" : "false"});`);
                         if (peer.in_filter) {
                             var def_act = peer.in_filter.default_action;
