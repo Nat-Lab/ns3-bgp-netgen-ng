@@ -20,7 +20,7 @@
   },
   "homepage": "https://github.com/nat-lab/ns3-bgp-netgen-ng#readme",
   "dependencies": {
-    "bootstrap": "^3.3.7",
+    "bootstrap": "^3.4.1",
     "codemirror": "^5.46.0",
     "djv": "^2.1.2",
     "json-beautify": "^1.1.0",
