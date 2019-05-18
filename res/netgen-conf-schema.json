@@ -8,11 +8,12 @@
             "type": "object",
             "description": "The options object specify options for the simulation.",
             "properties": {
-                "log": {
+                "log_components": {
                     "type": "array",
                     "description": "List of log components to be enabled.",
                     "additionalItems": false,
                     "items": {
+                        "title": "component",
                         "type": "string",
                         "description": "Name of the log component."
                     }
@@ -24,6 +25,7 @@
             "additionalItems": false,
             "description": "List of networks in the simulation.",
             "items": {
+                "title": "network",
                 "type": "object",
                 "description": "A network object defines a CSMA network.",
                 "properties": {
@@ -46,7 +48,7 @@
                             "mode": {
                                 "type": "string",
                                 "enum": ["ConfigureLocal", "UseLocal", "UseBridge"],
-                                "description": "Mode of the TapBridge to use. ('ConfigureLocal', 'UseLocal', or, 'UseBridge') Set mode to an non-empty value will eanble tapBridge on this network."
+                                "description": "Mode of the TapBridge to use. ('ConfigureLocal', 'UseLocal', or, 'UseBridge')"
                             },
                             "name": {
                                 "type": "string",
@@ -72,6 +74,7 @@
             "additionalItems": false,
             "description": "List of routers in the simulation.",
             "items": {
+                "title": "router",
                 "type": "object",
                 "description": "A router object define a Node.",
                 "properties": {
@@ -92,6 +95,7 @@
                         "additionalItems": false,
                         "description": "List of network devices to attach to this router.",
                         "items": {
+                            "title": "device",
                             "type": "object",
                             "description": "A device object represents a NetDevice.",
                             "properties": {
@@ -108,6 +112,7 @@
                                     "additionalItems": false,
                                     "description": "List of addresses on this device.",
                                     "items": {
+                                        "title": "address",
                                         "type": "string",
                                         "description": "Address in CIDR format."
                                     }
@@ -121,6 +126,7 @@
                         "additionalItems": false,
                         "description": "List of BGP neighbors of this router.",
                         "items": {
+                            "title": "peer",
                             "type": "object",
                             "description": "A Peer object represents a BGP neighbor.",
                             "properties": {
@@ -136,7 +142,7 @@
                                     "type": "string",
                                     "description": "ID of net device that the neighbor is on."
                                 },
-                                "in_filter": {
+                                "in_filters": {
                                     "type": "object",
                                     "description": "Ingress route filter for this neighbor.",
                                     "properties": {
@@ -145,10 +151,11 @@
                                             "enum": ["accept", "reject"],
                                             "description": "Default action of the filter. ('accept', or 'reject')"
                                         },
-                                        "filter": {
+                                        "filters": {
                                             "type": "array",
                                             "additionalItems": false,
                                             "items": {
+                                                "title": "filter",
                                                 "type": "object",
                                                 "description": "A filter object define a filter rule.",
                                                 "properties": {
@@ -172,7 +179,7 @@
                                         }
                                     }
                                 },
-                                "out_filter": {
+                                "out_filters": {
                                     "type": "object",
                                     "description": "Egress route filter for this neighbor.",
                                     "properties": {
@@ -181,10 +188,11 @@
                                             "enum": ["accept", "reject"],
                                             "description": "Default action of the filter. ('accept', or 'reject')"
                                         },
-                                        "filter": {
+                                        "filters": {
                                             "type": "array",
                                             "additionalItems": false,
                                             "items": {
+                                                "title": "filter",
                                                 "type": "object",
                                                 "description": "A filter object define a filter rule.",
                                                 "properties": {
@@ -221,6 +229,7 @@
                         "additionalItems": false,
                         "description": "List of routes to install to NLRI.",
                         "items": {
+                            "title": "route",
                             "type": "object",
                             "description": "A route object represents a route.",
                             "properties": {

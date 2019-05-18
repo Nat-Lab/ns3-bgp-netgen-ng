@@ -194,9 +194,9 @@ var NetGen = (function () {
         code.print('GlobalValue::Bind ("SimulatorImplementationType", StringValue ("ns3::RealtimeSimulatorImpl"));');
         code.print('GlobalValue::Bind ("ChecksumEnabled", BooleanValue (true));');
 
-        if (conf.options && conf.options.log) {
-            conf.options.log.forEach(log => {
-                code.print(`LogComponentEnable("${log}", LOG_LEVEL_ALL);`);
+        if (conf.options && conf.options.log_components) {
+            conf.options.log_components.forEach(component => {
+                code.print(`LogComponentEnable("${component}", LOG_LEVEL_ALL);`);
             });
         }
 
@@ -284,23 +284,23 @@ var NetGen = (function () {
                         var peer_dev_info = devices_info.filter(info => info.friendly_name == peer_dev)[0];
                         var { interface_id } = peer_dev_info;
                         var filter_name = `filter_${router.id}_peer${peer_id}`;
-                        var has_filters = (peer.in_filter && (peer.in_filter.filter || peer.in_filter.default_action)) || (peer.out_filter && (peer.out_filter.filter || peer.out_filter.default_action));
+                        var has_filters = (peer.in_filters && (peer.in_filters.filters || peer.in_filters.default_action)) || (peer.out_filters && (peer.out_filters.filters || peer.out_filters.default_action));
                         code.print(`${has_filters ? `auto ${filter_name} = ` : ''}${bgp_app}.AddPeer (Ipv4Address ("${peer.address}"), ${peer.asn}, ${interface_id}, ${peer.passive ? "true" : "false"});`);
-                        if (peer.in_filter) {
-                            var def_act = peer.in_filter.default_action;
+                        if (peer.in_filters) {
+                            var def_act = peer.in_filters.default_action;
                             if (def_act) code.print(`${filter_name}.in_filter->default_op = BGPFilterOP::${def_act.toUpperCase()};`);
 
-                            var filters = peer.in_filter.filter;
+                            var filters = peer.in_filters.filters;
                             if (filters) filters.forEach(filter => {
                                 var [address, netmask] = filter.prefix.split('/');
                                 code.print(`${filter_name}.in_filter->append (BGPFilterOP::${filter.action.toUpperCase()}, Ipv4Address ("${address}"), Ipv4Mask("/${netmask}"), ${filter.match_type == "strict" ? "true" : "false"});`);
                             });
                         }
-                        if (peer.out_filter) {
-                            var def_act = peer.out_filter.default_action;
+                        if (peer.out_filters) {
+                            var def_act = peer.out_filters.default_action;
                             if (def_act) code.print(`${filter_name}.out_filter->default_op = BGPFilterOP::${def_act.toUpperCase()};`);
 
-                            var filters = peer.out_filter.filter;
+                            var filters = peer.out_filters.filters;
                             if (filters) filters.forEach(filter => {
                                 var [address, netmask] = filter.prefix.split('/');
                                 code.print(`${filter_name}.out_filter->append (BGPFilterOP::${filter.action.toUpperCase()}, Ipv4Address ("${address}"), Ipv4Mask("/${netmask}"), ${filter.match_type == "strict" ? "true" : "false"});`);

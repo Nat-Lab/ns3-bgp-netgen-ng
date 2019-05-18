@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
 import Form from 'react-jsonschema-form';
 import schema from '../../res/netgen-conf-schema';
+import uischema from '../../res/netgen-conf-uischema';
 import NetGen from '../netgen';
 import Beautify from 'json-beautify';
 import {UnControlled as CodeMirror} from 'react-codemirror2';
-import Debounce from 'debounce';
 
 import 'bootstrap/dist/css/bootstrap.css';
 import 'codemirror/lib/codemirror.css';
@@ -51,7 +51,8 @@ class App extends Component {
                 <div className="col-md-8 col-sm-12 editor">
                 <legend>editor</legend>
                     <Form 
-                        schema={schema} 
+                        schema={schema}
+                        uiSchema={uischema}
                         onChange={data => {
                             this.setState({data: data.formData});
                         }}

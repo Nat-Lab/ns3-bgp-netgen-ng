@@ -32,12 +32,23 @@ button[type="submit"] {
 
 .form-group {
     margin: .5em;
-    border: solid 1px #333;
+    border: solid 1px #333; 
     padding: .5em;
 }
 
 .array-item-toolbox {
     padding-right: 1em;
+    padding-top: .5em;
+}
+
+.array-item-add {
+    border-top: soild 2px #333;
+}
+
+.field-string, .field-integer, .field-boolean {
+    border: none;
+    margin: .5em;
+    padding: 0;
 }
 
 legend {
@@ -53,4 +64,17 @@ legend {
 
 * {
     border-radius: 0 !important;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+    -webkit-appearance: none; 
+    margin: 0; 
+}
+
+::placeholder {
+    color: #ccc;
 }
