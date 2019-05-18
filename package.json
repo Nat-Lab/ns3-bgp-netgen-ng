@@ -22,7 +22,6 @@
   "dependencies": {
     "bootstrap": "^3.3.7",
     "codemirror": "^5.46.0",
-    "debounce": "^1.2.0",
     "djv": "^2.1.2",
     "json-beautify": "^1.1.0",
     "react": "^16.8.6",
