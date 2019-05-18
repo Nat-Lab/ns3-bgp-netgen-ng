@@ -20,7 +20,7 @@ class App extends Component {
             errors: 'No problems has been detected so far.',
         };
         this.buffer = '{}';
-        this.checker = Debounce(() => {
+        this.checker = () => {
             try {
                 var rslt = NetGen.check(JSON.parse(JSON.stringify(this.state.data)));
                 if (rslt.ok) this.setState({errors: 'No problems has been detected so far.'});
@@ -30,7 +30,16 @@ class App extends Component {
             } catch (e) {
                 this.state.errors = e;
             }
-        }, 200);
+        };
+        this.checker_id = -1;
+    }
+
+    componentDidMount() {
+        this.checker_id = window.setInterval(() => this.checker(), 1000);
+    }
+
+    componentWillUnmount() {
+        window.clearInterval(this.checker_id);
     }
 
     render() {
@@ -51,12 +60,8 @@ class App extends Component {
                         className="code"
                         value={Beautify(this.state.data, null, 4, 80)}
                         options={{mode: 'javascript', theme: 'default', lineNumbers: true}} 
-                        onBlur={() => {
-                            this.checker();
-                        }}
                         onChange={(editor, data, value) => {
                             this.buffer = value;
-                            this.checker();
                         }}
                     />
                     <legend>controls</legend>
@@ -95,7 +100,7 @@ class App extends Component {
                             }
                             
                         }}
-                    >Download Script</button>
+                    >Download script</button>
                     <button 
                         type="button" 
                         className="ctrl_but"
