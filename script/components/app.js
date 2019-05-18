@@ -21,6 +21,28 @@ class App extends Component {
             code: ''
         };
         this.buffer = '{}';
+        this.compile = function () {
+            try {
+                var obj = JSON.parse(this.buffer);
+                var rslt = NetGen.generate(obj);
+                if (rslt.ok) {
+                    this.setState({errors: 'No problems has been detected so far.', code: rslt.code});
+                    return true;
+                } else this.setState({errors: rslt.errors.join('\n')});
+            } catch (e) {
+                this.setState({errors: e.toString()});
+            }
+            return false;
+        };
+        this.save = function (buffer, filename) { 
+            var blob = new Blob([buffer], {type: 'text/plain'});
+            var anchor = document.createElement('a');
+            anchor.download = filename;
+            anchor.href = (window.webkitURL || window.URL).createObjectURL(blob);
+            anchor.dataset.downloadurl = ['text/plain', anchor.download, anchor.href].join(':');
+            anchor.click();
+            anchor.remove();
+        };
     }
 
     render() {
@@ -58,6 +80,13 @@ class App extends Component {
                             }
                         }}
                     >Load JSON to editor</button>
+                    <button 
+                        type="button" 
+                        className="ctrl_but"
+                        onClick={() => {
+                            this.save(JSON.stringify(this.state.data), 'config.json');
+                        }}
+                    >Download JSON</button>
                     <legend>script</legend>
                     <CodeMirror
                         className="code"
@@ -69,53 +98,16 @@ class App extends Component {
                         type="button" 
                         className="ctrl_but"
                         onClick={() => {
-                            try {
-                                var obj = JSON.parse(this.buffer);
-                                var rslt = NetGen.generate(obj);
-                                if (rslt.ok) {
-                                    this.setState({errors: 'No problems has been detected so far.', code: rslt.code});
-                                } else this.setState({errors: rslt.errors.join('\n')});
-                            } catch (e) {
-                                this.setState({errors: e.toString()});
-                            }
+                            this.compile();
                         }}
                     >Compile from JSON</button>
                     <button 
                         type="button" 
                         className="ctrl_but"
                         onClick={() => {
-                            try {
-                                var obj = JSON.parse(this.buffer);
-                                var rslt = NetGen.generate(obj);
-                                if (rslt.ok) {
-                                    this.setState({errors: 'No problems has been detected so far.'});
-                                    var blob = new Blob([rslt.code], {type: 'text/plain'});
-                                    var anchor = document.createElement('a');
-                                    anchor.download = 'script.cc';
-                                    anchor.href = (window.webkitURL || window.URL).createObjectURL(blob);
-                                    anchor.dataset.downloadurl = ['text/plain', anchor.download, anchor.href].join(':');
-                                    anchor.click();
-                                    anchor.remove();
-                                } else this.setState({errors: rslt.errors.join('\n')});
-                            } catch (e) {
-                                this.setState({errors: e.toString()});
-                            }
+                            if(this.compile()) this.save(this.state.code, 'script.cc');
                         }}
-                    >Download script</button>
-                    <button 
-                        type="button" 
-                        className="ctrl_but"
-                        onClick={() => {
-                            var json = JSON.stringify(this.state.data);    
-                            var blob = new Blob([json], {type: 'text/plain'});
-                            var anchor = document.createElement('a');
-                            anchor.download = 'configuration.json';
-                            anchor.href = (window.webkitURL || window.URL).createObjectURL(blob);
-                            anchor.dataset.downloadurl = ['text/plain', anchor.download, anchor.href].join(':');
-                            anchor.click();
-                            anchor.remove();
-                        }}
-                    >Download JSON</button>
+                    >Compile &amp; download script</button>
                     <pre>{this.state.errors}</pre>
                 </div>
             </div>
