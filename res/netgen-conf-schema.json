@@ -151,12 +151,18 @@
                                                     "type": "string",
                                                     "description": "ID of the peer to connect to."
                                                 },
-                                                "address": {
-                                                    "type": "string",
-                                                    "description": "Address in CIDR format."
+                                                "addresses": {
+                                                    "type": "array",
+                                                    "additionalItems": false,
+                                                    "description": "List of addresses on this device.",
+                                                    "items": {
+                                                        "title": "address",
+                                                        "type": "string",
+                                                        "description": "Address in CIDR format."
+                                                    }
                                                 }
                                             },
-                                            "required": ["peer", "address"]
+                                            "required": ["peer", "addresses"]
                                         }
                                     ]
                                 }

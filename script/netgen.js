@@ -95,7 +95,35 @@ var NetGen = (function () {
                             });
                         }
                         if (device.type == 'p2p') {
-                            errors.push('p2p mode for device not yet implemented.');
+                            if (device.set_by_peer) return;
+                            var peers = conf.routers.filter(router => router.id == device.peer);
+                            if (peers.length < 1) errors.push(`Unknow peer '${device.peer}' at ${_path}.`);
+                            if (peers.length > 1) errors.push(`More then one peer with id '${device.peer}' at ${_path}.`);
+                            if (peers.length != 1) return;
+
+                            var peer = peers[0];
+                            if (router.id == device.peer) errors.push(`p2p peer is self at ${_path}.`);
+
+                            var peer_devs = peer.devices.filter(device => device.type == 'p2p' && device.peer == router.id);
+                            if (peer_devs.length < 1) errors.push(`peer '${device.peer}' does not have a p2p link with this node at ${_path}.`);
+                            if (peer_devs.length > 1) errors.push(`peer '${device.peer}' has more then one p2p link with this node at ${_path}.`);
+                            if (peer_devs.length != 1) return;
+
+                            var peer_dev = peer_devs[0];
+                            peer_dev.set_by_peer = true;
+                            var name = `${router.id}_${device.peer}`;
+                            var conn_name = `p2p_${name}`;
+                            if (router.instance_id != peer.instance_id) {
+                                peer_dev.xnet = true;
+                                device.xnet = true;
+                                peer_dev.fd = `${conn_name}[1]`;
+                                device.fd = `${conn_name}[0]`;
+                                socketpair_names.push(conn_name);
+                            } else {
+                                device.p2p_channel = conn_name;
+                                peer_dev.p2p_channel = conn_name;
+                            }
+
                         }
                     })
                 }
@@ -157,14 +185,15 @@ var NetGen = (function () {
         var generate_dev_config = function(network, node, device, addrs, type) {
             var device_name = `dev_${node}_${device}`;
             code.print(`// begin netdevice config for ${node}, device ${device}.`);
-            if (type == "csma") code.print(`Ptr<CsmaNetDevice> ${device_name} = CreateObject<CsmaNetDevice> ();`);
-            if (type == "fd") {
+            if (type == 'csma') code.print(`Ptr<CsmaNetDevice> ${device_name} = CreateObject<CsmaNetDevice> ();`);
+            if (type == 'fd') {
                 code.print(`Ptr<FdNetDevice> ${device_name} = CreateObject<FdNetDevice> ();`);
                 code.print(`${device_name}->SetFileDescriptor (${network});`);
             }
+            if (type == 'p2p') code.print(`Ptr<PointToPointNetDevice> ${device_name} = CreateObject<PointToPointNetDevice> ();`);
             code.print(`${device_name}->SetAddress (Mac48Address ("${eui48()}"));`);
             code.print(`${node}->AddDevice(${device_name});`);
-            if (type == "csma") {
+            if (type == 'csma' || type == 'p2p') {
                 code.print(`${device_name}->SetQueue (CreateObject<DropTailQueue<Packet>> ());`);
                 code.print(`${device_name}->Attach (${network});`);
             }
@@ -193,6 +222,7 @@ var NetGen = (function () {
         code.print('#include "ns3/drop-tail-queue.h"');
         code.print('#include "ns3/fd-net-device-module.h"');
         code.print('#include "ns3/bridge-module.h"');
+        code.print('#include "ns3/point-to-point-module.h"');
         code.print('using namespace ns3;');
         code.print('int main (void) {');
         code.indent();
@@ -249,7 +279,7 @@ var NetGen = (function () {
                     code.print(`Ptr<Node> ${tap_name} = CreateObject<Node> ();`);
                     code.print(`internet.Install(${tap_name});`);
                     code.print(`Ptr<Ipv4> ipv4_${tap_name} = ${tap_name}->GetObject<Ipv4> ();`);
-                    var dev_info = generate_dev_config(`net_${net.id}`, tap_name, tap_name, [net.tap.address], "csma");
+                    var dev_info = generate_dev_config(`net_${net.id}`, tap_name, tap_name, [net.tap.address], 'csma');
                     code.print(`tapBridge.SetAttribute ("DeviceName", StringValue ("${net.tap.name}"));`);
                     code.print(`tapBridge.SetAttribute ("Mode", StringValue ("${net.tap.mode}"));`);
                     code.print(`tapBridge.Install (${tap_name}, ${dev_info.real_name});`);
@@ -258,6 +288,7 @@ var NetGen = (function () {
             });
             code.print('// end nets.');
 
+            var p2p_channels = [];
             code.print('// begin routers.');
             if (conf.routers) conf.routers.filter(router => router.instance_id == instance).forEach(router => {
                 code.print(`// begin router ${router.id} setup.`);
@@ -270,9 +301,23 @@ var NetGen = (function () {
                 var devices_info = [];
                 if (router.devices) {
                     router.devices.forEach(device => {
-                        var dev_info = device.xnet ? 
-                            generate_dev_config(device.fd, router_name, device.id, device.addresses, "fd") :
-                            generate_dev_config(`net_${device.network}`, router_name, device.id, device.addresses, "csma");
+                        var dev_info = {};
+                        if (device.xnet) 
+                            dev_info = generate_dev_config(device.fd, router_name, device.id, device.addresses, 'fd');
+
+                        if (device.type == 'p2p' && !device.xnet) {
+                            if (!p2p_channels.includes(device.p2p_channel)) {
+                                code.print(`Ptr<PointToPointChannel> ${device.p2p_channel} = CreateObject<PointToPointChannel> ();`);
+                                p2p_channels.push(device.p2p_channel);
+                            }
+
+                            dev_info = generate_dev_config(device.p2p_channel, router_name, device.id, device.addresses, 'p2p');
+                        }
+                            
+
+                        if (device.type == 'default' && !device.xnet) 
+                            dev_info = generate_dev_config(`net_${device.network}`, router_name, device.id, device.addresses, 'csma');
+
                         devices_info.push(dev_info);
                     });
                 }
