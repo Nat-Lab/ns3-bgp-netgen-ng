@@ -1,0 +1,29 @@
+{
+    "routers": {
+        "items": {
+            "peers": {
+                "items": {
+                    "in_filters": {
+                        "default_action": {
+                            "ui:placeholder": "default (accept)"
+                        }
+                    },
+                    "out_filters": {
+                        "default_action": {
+                            "ui:placeholder": "default (accept)"
+                        }
+                    }
+                }
+            }
+        } 
+    },
+    "networks": {
+        "items": {
+            "tap": {
+                "mode": {
+                    "ui:placeholder": "Disabled"
+                }
+            }
+        }
+    }
+}
