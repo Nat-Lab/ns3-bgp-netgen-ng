@@ -101,26 +101,66 @@
                             "type": "object",
                             "description": "A device object represents a NetDevice.",
                             "properties": {
+                                "type": {
+                                    "type": "string",
+                                    "enum": ["default", "p2p"],
+                                    "description": "Type of the device. A 'default' device connects to a network, while a 'p2p' network connects to a router.",
+                                    "default": "default"
+                                },
                                 "id": {
                                     "type": "string",
                                     "description": "A locally unique string that serves as the identifier for this net device."
-                                },
-                                "network": {
-                                    "type": "string",
-                                    "description": "ID of the network to connect to."
-                                },
-                                "addresses": {
-                                    "type": "array",
-                                    "additionalItems": false,
-                                    "description": "List of addresses on this device.",
-                                    "items": {
-                                        "title": "address",
-                                        "type": "string",
-                                        "description": "Address in CIDR format."
-                                    }
                                 }
                             },
-                            "required": ["id", "network", "addresses"]
+                            "required": ["id", "addresses", "type"],
+                            "dependencies": {
+                                "type": {
+                                    "oneOf": [
+                                        {
+                                            "properties": {
+                                                "type": {
+                                                    "enum": [
+                                                        "default"
+                                                    ]
+                                                },
+                                                "network": {
+                                                    "type": "string",
+                                                    "description": "ID of the network to connect to."
+                                                },
+                                                "addresses": {
+                                                    "type": "array",
+                                                    "additionalItems": false,
+                                                    "description": "List of addresses on this device.",
+                                                    "items": {
+                                                        "title": "address",
+                                                        "type": "string",
+                                                        "description": "Address in CIDR format."
+                                                    }
+                                                }
+                                            },
+                                            "required": ["network", "addresses"]
+                                        },
+                                        {
+                                            "properties": {
+                                                "type": {
+                                                    "enum": [
+                                                        "p2p"
+                                                    ]
+                                                },
+                                                "peer": {
+                                                    "type": "string",
+                                                    "description": "ID of the peer to connect to."
+                                                },
+                                                "address": {
+                                                    "type": "string",
+                                                    "description": "Address in CIDR format."
+                                                }
+                                            },
+                                            "required": ["peer", "address"]
+                                        }
+                                    ]
+                                }
+                            }
                         }
                     },
                     "peers": {
