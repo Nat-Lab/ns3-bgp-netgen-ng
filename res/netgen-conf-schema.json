@@ -112,7 +112,7 @@
                                     "description": "A locally unique string that serves as the identifier for this net device."
                                 }
                             },
-                            "required": ["id", "addresses", "type"],
+                            "required": ["id", "type"],
                             "dependencies": {
                                 "type": {
                                     "oneOf": [
