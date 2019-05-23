@@ -74,24 +74,29 @@ var NetGen = (function () {
                         var _path = `${path}.devices[${n}]`;
                         if (devs.includes(device.id)) errors.push(`Dulipicated device id "${device.id}" at ${_path}.`);
                         else devs.push(device.id);
-                        if (!nets.includes(device.network)) errors.push(`Unknow network id "${device.network}" at ${_path}.`);
-                        else {
-                            var net_instance = conf.networks.filter(net => net.id == device.network)[0].instance_id;
-                            if (net_instance != router.instance_id) {
-                                var name = `${router.id}_${device.id}`;
-                                var conn_name = `cil_${name}`;
-                                device.xnet = true;
-                                device.fd = `${conn_name}[0]`;
-                                ghosts.push({"instance_id": net_instance, "network": device.network, fd: `${conn_name}[1]`, name});
-                                socketpair_names.push(conn_name);
+                        if (device.type == 'default') {
+                            if (!nets.includes(device.network)) errors.push(`Unknow network id "${device.network}" at ${_path}.`);
+                            else {
+                                var net_instance = conf.networks.filter(net => net.id == device.network)[0].instance_id;
+                                if (net_instance != router.instance_id) {
+                                    var name = `${router.id}_${device.id}`;
+                                    var conn_name = `cil_${name}`;
+                                    device.xnet = true;
+                                    device.fd = `${conn_name}[0]`;
+                                    ghosts.push({"instance_id": net_instance, "network": device.network, fd: `${conn_name}[1]`, name});
+                                    socketpair_names.push(conn_name);
+                                }
                             }
+                            if (device.addresses.length <= 0) errors.push(`No addresses provided for "${device.id}" at ${_path}.`);
+                            device.addresses.forEach((address, n) => {
+                                var __path = `${_path}.addresses[${n}]`;
+                                if (!r_cidr.test(address))
+                                errors.push(`Invalid address "${address}" for "${device.id}" at ${__path}.`); 
+                            });
                         }
-                        if (device.addresses.length <= 0) errors.push(`No addresses provided for "${device.id}" at ${_path}.`);
-                        device.addresses.forEach((address, n) => {
-                            var __path = `${_path}.addresses[${n}]`;
-                            if (!r_cidr.test(address))
-                            errors.push(`Invalid address "${address}" for "${device.id}" at ${__path}.`); 
-                        });
+                        if (device.type == 'p2p') {
+                            errors.push('p2p mode for device not yet implemented.');
+                        }
                     })
                 }
 
@@ -329,36 +334,37 @@ var NetGen = (function () {
             });
             code.print('// end routers.');
 
+            code.print(`// setting up ghost for instance ${instance}`);
+            var ghost_node = `ghost_${instance}`;
+            code.print(`Ptr<Node> ${ghost_node} = CreateObject<Node> ();`);
+            code.print(`internet.Install(${ghost_node});`);
+            code.print(`// setting up ghost bridges for instance ${instance}`);
+            ghosts.filter(ghost => ghost.instance_id == instance)
+                .map(ghost => ghost.network)
+                .filter((v, i, s) => s.indexOf(v) == i)
+                .forEach(net => {
+                    var ghost_dev_br = `br_${net}`;
+                    code.print(`Ptr<BridgeNetDevice> ${ghost_dev_br} = CreateObject<BridgeNetDevice> ();`);
+                    code.print(`${ghost_node}->AddDevice(${ghost_dev_br});`);
+                    
+                    var ghost_dev_csma = `dev_${net}_csma`;
+                    code.print(`Ptr<CsmaNetDevice> ${ghost_dev_csma} = CreateObject<CsmaNetDevice> ();`);
+                    code.print(`${ghost_node}->AddDevice(${ghost_dev_csma});`);
+                    code.print(`${ghost_dev_csma}->SetQueue(CreateObject<DropTailQueue<Packet>> ());`);
+                    code.print(`${ghost_dev_csma}->Attach(net_${net});`);
+                    code.print(`${ghost_dev_br}->AddBridgePort(${ghost_dev_csma});`);
+                });
+            code.print(`// end ghost bridges setup for instance ${instance}`);
+            code.print(`// setting up fd <--> csma connection for instance ${instance}`);
             ghosts.filter(ghost => ghost.instance_id == instance).forEach(ghost => {
-                code.print(`// begin ghost ${ghost.name} setup.`);
-                var ghost_node = `ghost_${ghost.name}`;
-                code.print(`Ptr<Node> ${ghost_node} = CreateObject<Node> ();`);
-                code.print(`internet.Install(${ghost_node});`);
-
-                code.print(`// begin ghost ${ghost.name} csma terminal.`);
-                var ghost_dev_csma = `dev_${ghost_node}_csma`;
-                code.print(`Ptr<CsmaNetDevice> ${ghost_dev_csma} = CreateObject<CsmaNetDevice> ();`);
-                code.print(`${ghost_node}->AddDevice(${ghost_dev_csma});`);
-                code.print(`${ghost_dev_csma}->SetQueue(CreateObject<DropTailQueue<Packet>> ());`);
-                code.print(`${ghost_dev_csma}->Attach(net_${ghost.network});`);
-                code.print(`// end ghost ${ghost.name} csma terminal.`);
-
-                code.print(`// begin ghost ${ghost.name} fd netdev terminal.`);
-                var ghost_dev_fd = `dev_${ghost_node}_fd`;
+                var ghost_dev_fd = `dev_${ghost.name}_fd`;
+                var ghost_dev_br = `br_${ghost.network}`;
                 code.print(`Ptr<FdNetDevice> ${ghost_dev_fd} = CreateObject<FdNetDevice> ();`);
                 code.print(`${ghost_dev_fd}->SetFileDescriptor(${ghost.fd});`);
                 code.print(`${ghost_node}->AddDevice(${ghost_dev_fd});`);
-                code.print(`// end ghost ${ghost.name} fd netdev terminal.`);
-
-                code.print(`// begin ghost ${ghost.name} bridge.`);
-                var ghost_dev_br = `dev_${ghost_node}_br`;
-                code.print(`Ptr<BridgeNetDevice> ${ghost_dev_br} = CreateObject<BridgeNetDevice> ();`);
-                code.print(`${ghost_node}->AddDevice(${ghost_dev_br});`);
-                code.print(`${ghost_dev_br}->AddBridgePort(${ghost_dev_csma});`);
                 code.print(`${ghost_dev_br}->AddBridgePort(${ghost_dev_fd});`);
-                code.print(`// end ghost ${ghost.name} bridge.`);
-                code.print(`// end ghost ${ghost.name}.`);
             });
+            code.print(`// end fd <--> csma connection setup for instance ${instance}`);
 
             code.print('Simulator::Run();');
             code.print('return 0;');
