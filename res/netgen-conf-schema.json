@@ -300,6 +300,50 @@
                             },
                             "required": ["prefix", "device"]
                         }
+                    },
+                    "applications": {
+                        "type": "array",
+                        "description": "List of additional applications to be install on the router.",
+                        "additionalItems": false,
+                        "items": {
+                            "title": "application",
+                            "type": "object",
+                            "description": "An application object represents an application.",
+                            "properties": {
+                                "type": {
+                                    "type": "string",
+                                    "enum": ["ping"]
+                                }
+                            },
+                            "dependencies": {
+                                "type": {
+                                    "oneOf": [
+                                        {
+                                            "properties": {
+                                                "type": {
+                                                    "enum": [
+                                                        "ping"
+                                                    ]
+                                                },
+                                                "remote": {
+                                                    "description": "Address of remote host to ping.",
+                                                    "type": "string"
+                                                },
+                                                "interval": {
+                                                    "description": "Time in millisecond to wait between ping.",
+                                                    "type": "integer"
+                                                },
+                                                "size": {
+                                                    "description": "The number of data bytes to be sent, real packet will be 8 (ICMP) + 20 (IP) bytes longer.",
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": ["remote"]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
                     }
                 },
                 "required": ["id", "instance_id", "asn"]

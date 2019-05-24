@@ -218,11 +218,11 @@ var NetGen = (function () {
         code.print('#include "ns3/bgp-helper.h"');
         code.print('#include "ns3/ipv4-address.h"');
         code.print('#include "ns3/tap-bridge-module.h"');
-        code.print('#include "ns3/bgp-monitor.h"');
         code.print('#include "ns3/drop-tail-queue.h"');
         code.print('#include "ns3/fd-net-device-module.h"');
         code.print('#include "ns3/bridge-module.h"');
         code.print('#include "ns3/point-to-point-module.h"');
+        code.print('#include "ns3/internet-apps-module.h"');
         code.print('using namespace ns3;');
         code.print('int main (void) {');
         code.indent();
@@ -374,7 +374,25 @@ var NetGen = (function () {
 
                 code.print(`${bgp_app}.Install (${router_name});`);
                 code.print(`// end router ${router.id} bgp setup.`);
-
+                code.print(`// begin router ${router.id} app setup.`);
+                if (router.applications) {
+                
+                    router.applications.forEach((app, appid) => {
+                        switch (app.type) {
+                            case 'ping':
+                                if (!app.interval) app.interval = 1000;
+                                if (!app.size) app.size = 56;
+                                var appname = `app_${router.id}_${appid} `;
+                                code.print(`Ptr<V4Ping> ${appname} = CreateObject<V4Ping> ();`);
+                                code.print(`${appname}->SetAttribute ("Remote", Ipv4AddressValue (Ipv4Address("${app.remote}")));`);
+                                code.print(`${appname}->SetAttribute ("Verbose", BooleanValue (true));`);
+                                code.print(`${appname}->SetAttribute ("Interval", TimeValue (MilliSeconds(${app.interval})));`);
+                                code.print(`${appname}->SetAttribute ("Size", UintegerValue (${app.size}));`);  
+                                code.print(`${router_name}->AddApplication(${appname});`); 
+                        }
+                    });
+                }
+                code.print(`// end router ${router.id} app setup.`);
                 code.print(`// end router ${router.id} setup.`);
             });
             code.print('// end routers.');
