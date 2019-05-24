@@ -132,11 +132,11 @@ var NetGen = (function () {
                     router.routes.forEach((route, n) => {
                         var _path = `${path}.routes[${n}]`;
                         if (!r_cidr.test(route.prefix)) // FIXME: a valid CIDR may not be a valid prefix.
-                            errors.push(`Invalid prefix "${route.prefix} at ${_path}"`);
+                            errors.push(`Invalid prefix "${route.prefix}" at ${_path}.`);
                         if (!r_ipv4.test(route.nexthop))
-                            errors.push(`Invalid nexthop "${route.nexthop} at ${_path}"`);
+                            errors.push(`Invalid nexthop "${route.nexthop}" at ${_path}.`);
                         if (!devs.includes(route.device))
-                            errors.push(`Unknow device "${route.device} at ${_path}"`);
+                            errors.push(`Unknow device "${route.device}" at ${_path}.`);
                     });
                 }
 
@@ -144,24 +144,34 @@ var NetGen = (function () {
                     router.peers.forEach((peer, n) => {
                         var _path = `${path}.peers[${n}]`;
                         if (!r_ipv4.test(peer.address))
-                            errors.push(`Invalid peer address "${peer.address} at ${_path}"`);
+                            errors.push(`Invalid peer address "${peer.address}" at ${_path}.`);
                         if (!devs.includes(peer.device))
-                            errors.push(`Unknow device "${peer.device} at ${_path}"`);
+                            errors.push(`Unknow device "${peer.device}" at ${_path}.`);
                         if (peer.in_filter && peer.in_filter.filter) {
                             peer.in_filter.filter.forEach((filter, n) => {
                                 var __path = `${_path}.in_filter.filter[${n}]`;
                                 if (!r_cidr.test(filter.prefix))
-                                errors.push(`Invalid prefix "${filter.prefix} at ${__path}"`);
+                                errors.push(`Invalid prefix "${filter.prefix}" at ${__path}.`);
                             });
                         }
                         if (peer.out_filter && peer.out_filter.filter) {
                             peer.out_filter.filter.forEach((filter, n) => {
                                 var __path = `${_path}.out_filter.filter[${n}]`;
                                 if (!r_cidr.test(filter.prefix))
-                                errors.push(`Invalid prefix "${filter.prefix} at ${__path}"`);
+                                errors.push(`Invalid prefix "${filter.prefix}" at ${__path}.`);
                             });
                         }
                     })
+                }
+
+                if (router.applications) {
+                    router.applications.forEach((app, n) => {
+                        var _path = `${path}.applications[${n}]`;
+                        switch (app.type) {
+                            case 'ping':
+                                if (!r_ipv4.test(app.remote)) errors.push(`Invalid ping remote address "${app.remote}" at ${_path}.`);
+                        }
+                    });
                 }
 
                 if (instances.every(id => id != router.instance_id))
