@@ -236,6 +236,7 @@ var NetGen = (function () {
             }
             if (type == 'p2p') code.print(`Ptr<PointToPointNetDevice> ${device_name} = CreateObject<PointToPointNetDevice> ();`);
             code.print(`${device_name}->SetAddress (Mac48Address ("${eui48()}"));`);
+            code.print(`${device_name}->SetDataRate (DataRate (0xffffffff));`);
             code.print(`${node}->AddDevice(${device_name});`);
             if (type == 'csma' || type == 'p2p') {
                 code.print(`${device_name}->SetQueue (CreateObject<DropTailQueue<Packet>> ());`);
