@@ -5,6 +5,7 @@ var NetGen = (function () {
     const r_ipv4 = /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/;
     const r_cidr = /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$/;
 
+    /* Printer: code print helper with indentation */
     var Printer = function () {
         var buffer = [];
         var indent = 0;
@@ -25,17 +26,37 @@ var NetGen = (function () {
         }
     };
 
+    /* Includes: header manager */
+    var Includes = function () {
+        var inc = [];
+
+        return {
+            add: function (header, global) {
+                var line = `#include ${global ? `<${header}>` : `"${header}`}"`;
+                if (inc.includes(line)) return false;
+                else return inc.push(line);
+            },
+            install: function (printer) {
+                inc.forEach(i => printer.print(i));
+            }
+        };
+    };
+
+    /* MAC address allocator */
     var EUI48AddressGenerator = function () {
         var counter = 1;
         return function () {
-            return ('00'.repeat(6) + (counter++).toString(16)).slice(-12).match( /../g ).join(':');
+            return ('00'.repeat(6) + (counter++).toString(16)).slice(-12).match(/../g).join(':');
         };
     };
 
     const djv_env = new djv();
     djv_env.addSchema('netgen-conf', schema);
 
+    /* preprocess: checking / metadata collect */
     var preprocess = function (conf) {
+        var includes = new Includes();
+
         var err = djv_env.validate('netgen-conf', conf);
         if (typeof err !== 'undefined') {
             return {ok: false, errors: [`pre-check failed: ${JSON.stringify(err)}`]}
@@ -49,12 +70,14 @@ var NetGen = (function () {
 
         if (conf.networks) {
             conf.networks.forEach ((network, n) => {
+                includes.add('ns3/csma-module.h');
                 var path = `conf.networks[${n}]`;
 
                 if (nets.includes(network.id)) errors.push(`Dulipicated network id "${network.id}" at ${path}.`);
                 else nets.push(network.id);
 
                 if (network.tap && network.tap.mode) {
+                    includes.add('ns3/tap-bridge-module.h');
                     if(!r_cidr.test(network.tap.address)) 
                         errors.push(`Invalid TAP address "${network.tap.address}" at ${path}.tap.`); 
                 }
@@ -75,15 +98,19 @@ var NetGen = (function () {
                         if (devs.includes(device.id)) errors.push(`Dulipicated device id "${device.id}" at ${_path}.`);
                         else devs.push(device.id);
                         if (device.type == 'default') {
+                            includes.add('ns3/csma-module.h');
                             if (!nets.includes(device.network)) errors.push(`Unknow network id "${device.network}" at ${_path}.`);
                             else {
                                 var net_instance = conf.networks.filter(net => net.id == device.network)[0].instance_id;
                                 if (net_instance != router.instance_id) {
+                                    includes.add('ns3/fd-net-device-module.h');
+                                    includes.add('ns3/bridge-module.h');
+                                    // HERE
                                     var name = `${router.id}_${device.id}`;
                                     var conn_name = `cil_${name}`;
                                     device.xnet = true;
                                     device.fd = `${conn_name}[0]`;
-                                    ghosts.push({"instance_id": net_instance, "network": device.network, fd: `${conn_name}[1]`, name});
+                                    ghosts.push({'instance_id': net_instance, 'network': device.network, fd: `${conn_name}[1]`, name});
                                     socketpair_names.push(conn_name);
                                 }
                             }
@@ -95,7 +122,9 @@ var NetGen = (function () {
                             });
                         }
                         if (device.type == 'p2p') {
+                            /* p2p device configured by peer, skip */
                             if (device.set_by_peer) return;
+
                             var peers = conf.routers.filter(router => router.id == device.peer);
                             if (peers.length < 1) errors.push(`Unknow peer '${device.peer}' at ${_path}.`);
                             if (peers.length > 1) errors.push(`More then one peer with id '${device.peer}' at ${_path}.`);
@@ -109,17 +138,21 @@ var NetGen = (function () {
                             if (peer_devs.length > 1) errors.push(`peer '${device.peer}' has more then one p2p link with this node at ${_path}.`);
                             if (peer_devs.length != 1) return;
 
+                            /* configure both self and peer device */
                             var peer_dev = peer_devs[0];
                             peer_dev.set_by_peer = true;
                             var name = `${router.id}_${device.peer}`;
                             var conn_name = `p2p_${name}`;
+
                             if (router.instance_id != peer.instance_id) {
+                                includes.add('ns3/fd-net-device-module.h');
                                 peer_dev.xnet = true;
                                 device.xnet = true;
                                 peer_dev.fd = `${conn_name}[1]`;
                                 device.fd = `${conn_name}[0]`;
                                 socketpair_names.push(conn_name);
                             } else {
+                                includes.add('ns3/point-to-point-module.h');
                                 device.p2p_channel = conn_name;
                                 peer_dev.p2p_channel = conn_name;
                             }
@@ -169,6 +202,7 @@ var NetGen = (function () {
                         var _path = `${path}.applications[${n}]`;
                         switch (app.type) {
                             case 'ping':
+                                includes.add('ns3/internet-apps-module.h');
                                 if (!r_ipv4.test(app.remote)) errors.push(`Invalid ping remote address "${app.remote}" at ${_path}.`);
                         }
                     });
@@ -180,7 +214,7 @@ var NetGen = (function () {
         }
 
         if (errors.length > 0) return {ok: false, errors};
-        else return {ok: true, instances, ghosts, socketpair_names, configuration: conf};
+        else return {ok: true, instances, ghosts, socketpair_names, configuration: conf, includes};
 
     };
 
@@ -190,7 +224,7 @@ var NetGen = (function () {
 
         var code = new Printer();
         var eui48 = EUI48AddressGenerator();
-        var {instances, ghosts, socketpair_names} = preprocess_rslt;
+        var {instances, ghosts, socketpair_names, includes} = preprocess_rslt;
 
         var generate_dev_config = function(network, node, device, addrs, type) {
             var device_name = `dev_${node}_${device}`;
@@ -223,16 +257,16 @@ var NetGen = (function () {
         code.print('#include <errno.h>');
         code.print('#include <unistd.h>');
         code.print('#include "ns3/core-module.h"');
-        code.print('#include "ns3/csma-module.h"');
+        //code.print('#include "ns3/csma-module.h"');
         code.print('#include "ns3/internet-module.h"');
         code.print('#include "ns3/bgp-helper.h"');
         code.print('#include "ns3/ipv4-address.h"');
-        code.print('#include "ns3/tap-bridge-module.h"');
         code.print('#include "ns3/drop-tail-queue.h"');
-        code.print('#include "ns3/fd-net-device-module.h"');
-        code.print('#include "ns3/bridge-module.h"');
-        code.print('#include "ns3/point-to-point-module.h"');
-        code.print('#include "ns3/internet-apps-module.h"');
+        //code.print('#include "ns3/fd-net-device-module.h"');
+        //code.print('#include "ns3/bridge-module.h"');
+        //code.print('#include "ns3/point-to-point-module.h"');
+        //code.print('#include "ns3/internet-apps-module.h"');
+        includes.install(code);
         code.print('using namespace ns3;');
         code.print('int main (void) {');
         code.indent();
