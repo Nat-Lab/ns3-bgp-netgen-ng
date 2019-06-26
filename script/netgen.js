@@ -5,6 +5,8 @@ var NetGen = (function () {
     const r_ipv4 = /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/;
     const r_cidr = /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$/;
 
+    var use_tap = false;
+
     /* Printer: code print helper with indentation */
     var Printer = function () {
         var buffer = [];
@@ -77,6 +79,7 @@ var NetGen = (function () {
                 else nets.push(network.id);
 
                 if (network.tap && network.tap.mode) {
+                    use_tap = true;
                     includes.add('ns3/tap-bridge-module.h');
                     if(!r_cidr.test(network.tap.address)) 
                         errors.push(`Invalid TAP address "${network.tap.address}" at ${path}.tap.`); 
@@ -293,7 +296,7 @@ var NetGen = (function () {
         code.print('// end socketpairs init.');
 
         code.print('InternetStackHelper internet;');
-        code.print('TapBridgeHelper tapBridge;')
+        if (use_tap) code.print('TapBridgeHelper tapBridge;')
         code.print('pid_t pid;');
 
         instances.forEach(instance => {
