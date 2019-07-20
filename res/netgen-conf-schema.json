@@ -88,9 +88,15 @@
                         "type": "string",
                         "description": "The ID of the instance that this router belongs to. If such an ID does not exist, a new instance will be created."
                     },
-                    "asn": {
-                        "type": "integer",
-                        "description": "The ASN of this router."
+                    "router_id": {
+                        "type": "string",
+                        "description": "The BGP ID of tis router."
+                    },
+                    "libbgp_loglevel": {
+                        "type": "string",
+                        "enum": ["FATAL", "ERROR", "WARN", "INFO", "DEBUG"],
+                        "default": "INFO",
+                        "description": "Log level of libbgp."
                     },
                     "devices": {
                         "type": "array",
@@ -182,13 +188,13 @@
                                     "type": "string",
                                     "description": "IP address of the neighbor."
                                 },
+                                "local_asn": {
+                                    "type": "integer",
+                                    "description": "The ASN of local router."
+                                },
                                 "asn": {
                                     "type": "integer",
                                     "description": "ASN of the neighbor"
-                                },
-                                "device": {
-                                    "type": "string",
-                                    "description": "ID of net device that the neighbor is on."
                                 },
                                 "in_filters": {
                                     "type": "object",
@@ -269,7 +275,7 @@
                                     "description": "Is this a passive session?"
                                 }
                             },
-                            "required": ["address", "asn", "device"]
+                            "required": ["address", "asn", "local_asn"]
                         }
                     },
                     "routes": {
@@ -288,17 +294,9 @@
                                 "nexthop": {
                                     "type": "string",
                                     "description": "IP address of the nexthop."
-                                },
-                                "device": {
-                                    "type": "string",
-                                    "description": "The nexthop device."
-                                },
-                                "local": {
-                                    "type": "boolean",
-                                    "description": "Is this route local? Local routes won't be sent to BGP neighbors."
                                 }
                             },
-                            "required": ["prefix", "device"]
+                            "required": ["prefix", "nexthop"]
                         }
                     },
                     "applications": {
@@ -346,7 +344,7 @@
                         }
                     }
                 },
-                "required": ["id", "instance_id", "asn"]
+                "required": ["id", "instance_id", "router_id"]
             }
         }
     }

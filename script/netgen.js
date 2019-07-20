@@ -171,8 +171,6 @@ var NetGen = (function () {
                             errors.push(`Invalid prefix "${route.prefix}" at ${_path}.`);
                         if (!r_ipv4.test(route.nexthop))
                             errors.push(`Invalid nexthop "${route.nexthop}" at ${_path}.`);
-                        if (!devs.includes(route.device))
-                            errors.push(`Unknow device "${route.device}" at ${_path}.`);
                     });
                 }
 
@@ -181,8 +179,6 @@ var NetGen = (function () {
                         var _path = `${path}.peers[${n}]`;
                         if (!r_ipv4.test(peer.address))
                             errors.push(`Invalid peer address "${peer.address}" at ${_path}.`);
-                        if (!devs.includes(peer.device))
-                            errors.push(`Unknow device "${peer.device}" at ${_path}.`);
                         if (peer.in_filter && peer.in_filter.filter) {
                             peer.in_filter.filter.forEach((filter, n) => {
                                 var __path = `${_path}.in_filter.filter[${n}]`;
@@ -237,9 +233,11 @@ var NetGen = (function () {
                 code.print(`Ptr<FdNetDevice> ${device_name} = CreateObject<FdNetDevice> ();`);
                 code.print(`${device_name}->SetFileDescriptor (${network});`);
             }
-            if (type == 'p2p') code.print(`Ptr<PointToPointNetDevice> ${device_name} = CreateObject<PointToPointNetDevice> ();`);
+            if (type == 'p2p') {
+                code.print(`Ptr<PointToPointNetDevice> ${device_name} = CreateObject<PointToPointNetDevice> ();`);
+                code.print(`${device_name}->SetDataRate (DataRate (0xffffffff));`);
+            }
             code.print(`${device_name}->SetAddress (Mac48Address ("${eui48()}"));`);
-            code.print(`${device_name}->SetDataRate (DataRate (0xffffffff));`);
             code.print(`${node}->AddDevice(${device_name});`);
             if (type == 'csma' || type == 'p2p') {
                 code.print(`${device_name}->SetQueue (CreateObject<DropTailQueue<Packet>> ());`);
@@ -373,37 +371,42 @@ var NetGen = (function () {
 
                 code.print(`// begin router ${router.id} bgp setup.`);
                 var bgp_app = `bgp_${router_name}`;
-                code.print(`BGPHelper ${bgp_app} (${router.asn});`);
+                code.print(`Ptr<Bgp> ${bgp_app} = CreateObject<Bgp>();`);
+                code.print(`${bgp_app}->SetAttribute("RouterID", Ipv4AddressValue("${router.router_id}"));`);
+                code.print(`${bgp_app}->SetAttribute("LibbgpLogLevel", EnumValue(libbgp::${router.libbgp_loglevel}));`);
 
                 code.print(`// begin router ${router.id} bgp peer setup.`);
                 if (router.peers) {
                     router.peers.forEach((peer, peer_id) => {
-                        var peer_dev = peer.device;
-                        var peer_dev_info = devices_info.filter(info => info.friendly_name == peer_dev)[0];
-                        var { interface_id } = peer_dev_info;
-                        var filter_name = `filter_${router.id}_peer${peer_id}`;
-                        var has_filters = (peer.in_filters && (peer.in_filters.filters || peer.in_filters.default_action)) || (peer.out_filters && (peer.out_filters.filters || peer.out_filters.default_action));
-                        code.print(`${has_filters ? `auto ${filter_name} = ` : ''}${bgp_app}.AddPeer (Ipv4Address ("${peer.address}"), ${peer.asn}, ${interface_id}, ${peer.passive ? "true" : "false"});`);
+                        var peer_name = `${bgp_app}_peer_${peer_id}`;
+                        code.print(`Peer ${peer_name};`);
+                        code.print(`${peer_name}.peer_address = "${peer.address}";`);
+                        code.print(`${peer_name}.peer_asn = ${peer.asn};`);
+                        code.print(`${peer_name}.local_asn = ${peer.local_asn};`);
+                        code.print(`${peer_name}.passive = ${peer.passive ? "true" : "false"};`);
+                        
                         if (peer.in_filters) {
                             var def_act = peer.in_filters.default_action;
-                            if (def_act) code.print(`${filter_name}.in_filter->default_op = BGPFilterOP::${def_act.toUpperCase()};`);
+                            if (def_act) code.print(`${peer_name}.ingress_rules = libbgp::BgpFilterRules(libbgp::${def_act.toUpperCase()});`);
 
                             var filters = peer.in_filters.filters;
                             if (filters) filters.forEach(filter => {
                                 var [address, netmask] = filter.prefix.split('/');
-                                code.print(`${filter_name}.in_filter->append (BGPFilterOP::${filter.action.toUpperCase()}, Ipv4Address ("${address}"), Ipv4Mask("/${netmask}"), ${filter.match_type == "strict" ? "true" : "false"});`);
+                                code.print(`${peer_name}.ingress_rules.append(libbgp::BgpFilterRule(libbgp::${filter.match_type.toUpperCase()}, libbgp::${filter.action.toUpperCase()}, "${address}", ${netmask}));`);
                             });
                         }
                         if (peer.out_filters) {
                             var def_act = peer.out_filters.default_action;
-                            if (def_act) code.print(`${filter_name}.out_filter->default_op = BGPFilterOP::${def_act.toUpperCase()};`);
+                            if (def_act) code.print(`${peer_name}.egress_rules = libbgp::BgpFilterRules(libbgp::${def_act.toUpperCase()});`);
 
                             var filters = peer.out_filters.filters;
                             if (filters) filters.forEach(filter => {
                                 var [address, netmask] = filter.prefix.split('/');
-                                code.print(`${filter_name}.out_filter->append (BGPFilterOP::${filter.action.toUpperCase()}, Ipv4Address ("${address}"), Ipv4Mask("/${netmask}"), ${filter.match_type == "strict" ? "true" : "false"});`);
+                                code.print(`${peer_name}.egress_rules.append(libbgp::BgpFilterRule(libbgp::${filter.match_type.toUpperCase()}, libbgp::${filter.action.toUpperCase()}, "${address}", ${netmask}));`);
                             });
                         }
+
+                        code.print(`${bgp_app}->AddPeer(${peer_name});`);
                     });
                 }
                 code.print(`// end router ${router.id} bgp peer setup.`);
@@ -411,20 +414,16 @@ var NetGen = (function () {
                 code.print(`// begin router ${router.id} bgp nlri setup.`);
                 if (router.routes) {
                     router.routes.forEach(route => {
-                        var route_dev = route.device;
-                        var route_dev_info = devices_info.filter(info => info.friendly_name == route_dev)[0];
-                        var { interface_id } = route_dev_info;
                         var [address, netmask] = route.prefix.split('/');
-                        code.print(`${bgp_app}.AddRoute (Ipv4Address ("${address}"), ${netmask}, Ipv4Address("${route.nexthop}"), ${interface_id}, ${route.local ? "true" : "false"});`);
+                        code.print(`${bgp_app}->AddRoute("${address}", Ipv4Mask("/${netmask}"), "${route.nexthop}");`);
                     });
                 }
                 code.print(`// end router ${router.id} bgp nlri setup.`);
 
-                code.print(`${bgp_app}.Install (${router_name});`);
+                code.print(`${router_name}->AddApplication(${bgp_app});`);
                 code.print(`// end router ${router.id} bgp setup.`);
                 code.print(`// begin router ${router.id} app setup.`);
                 if (router.applications) {
-                
                     router.applications.forEach((app, appid) => {
                         switch (app.type) {
                             case 'ping':
