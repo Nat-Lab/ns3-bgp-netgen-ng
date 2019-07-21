@@ -95,6 +95,10 @@ var NetGen = (function () {
                 var path = `conf.routers[${n}]`;
                 var devs = [];
 
+                if (!r_ipv4.test(router.router_id)) {
+                    errors.push(`Invalid BGP ID "${router.router_id}" at ${path}.`);
+                }
+
                 if (router.devices) {
                     router.devices.forEach((device, n) => {
                         var _path = `${path}.devices[${n}]`;
