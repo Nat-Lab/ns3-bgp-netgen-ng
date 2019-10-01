@@ -85,10 +85,10 @@ var NetGen = (function () {
                         errors.push(`Invalid TAP address "${network.tap.address}" at ${path}.tap.`); 
                 }
 
-                if (network.dist_bridge) {
+                if (network.dist_bridge && network.dist_bridge.mode) {
                     includes.add('ns3/distributed-bridge-helper.h');
                     if(!r_ipv4.test(network.dist_bridge.server))
-                        errors.push(`Invalid DistServer IP: "${etwork.dist_bridge.server}" at ${path}.dist_bridge.`)
+                        errors.push(`Invalid DistServer IP: "${network.dist_bridge.server}" at ${path}.dist_bridge.`)
                 }
 
                 if (instances.every(id => id != network.instance_id))
