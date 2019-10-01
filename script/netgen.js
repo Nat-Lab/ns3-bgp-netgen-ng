@@ -85,6 +85,12 @@ var NetGen = (function () {
                         errors.push(`Invalid TAP address "${network.tap.address}" at ${path}.tap.`); 
                 }
 
+                if (network.dist_bridge) {
+                    includes.add('ns3/distributed-bridge-helper.h');
+                    if(!r_ipv4.test(network.dist_bridge.server))
+                        errors.push(`Invalid DistServer IP: "${etwork.dist_bridge.server}" at ${path}.dist_bridge.`)
+                }
+
                 if (instances.every(id => id != network.instance_id))
                     instances.push(network.instance_id);
             })
@@ -334,6 +340,17 @@ var NetGen = (function () {
                     code.print(`tapBridge.SetAttribute ("Mode", StringValue ("${net.tap.mode}"));`);
                     code.print(`tapBridge.Install (${tap_name}, ${dev_info.real_name});`);
                     code.print(`// end tap for net ${net.id}.`);
+                }
+                if (net.dist_bridge && net.dist_bridge.mode) {
+                    var dist_name = `dist_${net.id}`;
+                    code.print(`// begin dist_bridge for net ${net.id}.`);
+                    code.print(`Ptr<Node> ${dist_name} = CreateObject<Node> ();`);
+                    code.print(`internet.Install(${dist_name});`);
+                    code.print(`Ptr<Ipv4> ipv4_${dist_name} = ${dist_name}->GetObject<Ipv4> ();`);
+                    var dev_info = generate_dev_config(`net_${net.id}`, dist_name, dist_name, [], 'csma');
+                    code.print(`DistributedBridgeHelper disthelp_${net.id} ("${net.dist_bridge.server}", ${net.dist_bridge.port}, ${net.dist_bridge.network_id});`);
+                    code.print(`disthelp_${net.id}.Install(${dist_name}, ${dev_info.real_name});`);
+                    code.print(`// end dist_bridge for net ${net.id}.`);
                 }
             });
             code.print('// end nets.');
