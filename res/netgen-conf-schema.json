@@ -73,6 +73,38 @@
                   ]
                 }
               }
+            },
+            "dist_bridge": {
+              "type": "object",
+              "description": "A Distributed Bridge object specifies the configuration of a DistBridge.",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "description": "Enable DistBridge?"
+                }
+              },
+              "dependencies": {
+                "enabled": {
+                  "properties": {
+                    "server": {
+                      "type": "string",
+                      "description": "IP address of the distribution server."
+                    },
+                    "port": {
+                      "type": "integer",
+                      "description": "Port number of the distribution server.",
+                      "maximum": 65534,
+                      "default": 2672
+                    },
+                    "network_id": {
+                      "type": "integer",
+                      "description": "ID to the network to join.",
+                      "maximum": 255
+                    }
+                  },
+                  "required": ["server", "port", "network_id"]
+                } 
+              }
             }
           },
           "required": [
