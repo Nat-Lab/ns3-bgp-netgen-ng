@@ -4,348 +4,588 @@
     "title": "ns3-bgp-netgen-ng",
     "type": "object",
     "properties": {
-        "options": {
-            "type": "object",
-            "description": "The options object specify options for the simulation.",
-            "properties": {
-                "log_components": {
-                    "type": "array",
-                    "description": "List of log components to be enabled.",
-                    "additionalItems": false,
-                    "items": {
-                        "title": "component",
-                        "type": "string",
-                        "description": "Name of the log component."
-                    }
-                }
-            }
-        },
-        "networks": {
+      "options": {
+        "type": "object",
+        "description": "The options object specify options for the simulation.",
+        "properties": {
+          "log_components": {
             "type": "array",
+            "description": "List of log components to be enabled.",
             "additionalItems": false,
-            "description": "List of networks in the simulation.",
             "items": {
-                "title": "network",
-                "type": "object",
-                "description": "A network object defines a CSMA network.",
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "description": "A globally unique string that serves as the identifier for the network."
-                    },
-                    "instance_id": {
-                        "type": "string",
-                        "description": "The ID of the instance that this network belongs to. If such an ID does not exist, a new instance will be created."
-                    },
-                    "prefix": {
-                        "type": "string",
-                        "description": "Network prefix for this network in CIDR notation. (Optional, not used, for readability only.)"
-                    },
-                    "tap": {
-                        "type": "object",
-                        "description": "A TAP object specifies the configuration of a TapBridge.",
-                        "properties": {
-                            "mode": {
-                                "type": "string",
-                                "enum": ["ConfigureLocal", "UseLocal", "UseBridge"],
-                                "description": "Mode of the TapBridge to use. ('ConfigureLocal', 'UseLocal', or, 'UseBridge')"
-                            }
-                        },
-                        "dependencies": {
-                            "mode": {
-                                "properties": {
-                                    "name": {
-                                        "type": "string",
-                                        "description": "The name of the TAP interface."
-                                    },
-                                    "address": {
-                                        "type": "string",
-                                        "description": "IPv4 address of the Tap Interface in CIDR notation."
-                                    }
-                                },
-                                "required": ["name", "address"]
-                            }
-                        }
-                    }
-                },
-                "required": ["id", "instance_id"]
+              "title": "component",
+              "type": "string",
+              "description": "Name of the log component."
             }
-        },
-        "routers": {
-            "type": "array",
-            "additionalItems": false,
-            "description": "List of routers in the simulation.",
-            "items": {
-                "title": "router",
-                "type": "object",
-                "description": "A router object define a Node.",
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "description": "A globally unique string that serves as the identifier for the router."
-                    },
-                    "instance_id": {
-                        "type": "string",
-                        "description": "The ID of the instance that this router belongs to. If such an ID does not exist, a new instance will be created."
-                    },
-                    "router_id": {
-                        "type": "string",
-                        "description": "The BGP ID of tis router."
-                    },
-                    "libbgp_loglevel": {
-                        "type": "string",
-                        "enum": ["FATAL", "ERROR", "WARN", "INFO", "DEBUG"],
-                        "default": "INFO",
-                        "description": "Log level of libbgp."
-                    },
-                    "devices": {
-                        "type": "array",
-                        "additionalItems": false,
-                        "description": "List of network devices to attach to this router.",
-                        "items": {
-                            "title": "device",
-                            "type": "object",
-                            "description": "A device object represents a NetDevice.",
-                            "properties": {
-                                "type": {
-                                    "type": "string",
-                                    "enum": ["default", "p2p"],
-                                    "description": "Type of the device. A 'default' device connects to a network, while a 'p2p' network connects to a router.",
-                                    "default": "default"
-                                },
-                                "id": {
-                                    "type": "string",
-                                    "description": "A locally unique string that serves as the identifier for this net device."
-                                }
-                            },
-                            "required": ["id", "type"],
-                            "dependencies": {
-                                "type": {
-                                    "oneOf": [
-                                        {
-                                            "properties": {
-                                                "type": {
-                                                    "enum": [
-                                                        "default"
-                                                    ]
-                                                },
-                                                "network": {
-                                                    "type": "string",
-                                                    "description": "ID of the network to connect to."
-                                                },
-                                                "addresses": {
-                                                    "type": "array",
-                                                    "additionalItems": false,
-                                                    "description": "List of addresses on this device.",
-                                                    "items": {
-                                                        "title": "address",
-                                                        "type": "string",
-                                                        "description": "Address in CIDR format."
-                                                    }
-                                                }
-                                            },
-                                            "required": ["network", "addresses"]
-                                        },
-                                        {
-                                            "properties": {
-                                                "type": {
-                                                    "enum": [
-                                                        "p2p"
-                                                    ]
-                                                },
-                                                "peer": {
-                                                    "type": "string",
-                                                    "description": "ID of the peer to connect to."
-                                                },
-                                                "addresses": {
-                                                    "type": "array",
-                                                    "additionalItems": false,
-                                                    "description": "List of addresses on this device.",
-                                                    "items": {
-                                                        "title": "address",
-                                                        "type": "string",
-                                                        "description": "Address in CIDR format."
-                                                    }
-                                                }
-                                            },
-                                            "required": ["peer", "addresses"]
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "peers": {
-                        "type": "array",
-                        "additionalItems": false,
-                        "description": "List of BGP neighbors of this router.",
-                        "items": {
-                            "title": "peer",
-                            "type": "object",
-                            "description": "A Peer object represents a BGP neighbor.",
-                            "properties": {
-                                "address": {
-                                    "type": "string",
-                                    "description": "IP address of the neighbor."
-                                },
-                                "local_asn": {
-                                    "type": "integer",
-                                    "description": "The ASN of local router."
-                                },
-                                "asn": {
-                                    "type": "integer",
-                                    "description": "ASN of the neighbor"
-                                },
-                                "in_filters": {
-                                    "type": "object",
-                                    "description": "Ingress route filter for this neighbor.",
-                                    "properties": {
-                                        "default_action": {
-                                            "type": "string",
-                                            "enum": ["accept", "reject"],
-                                            "description": "Default action of the filter. ('accept', or 'reject')"
-                                        },
-                                        "filters": {
-                                            "type": "array",
-                                            "additionalItems": false,
-                                            "items": {
-                                                "title": "filter",
-                                                "type": "object",
-                                                "description": "A filter object define a filter rule.",
-                                                "properties": {
-                                                    "prefix": {
-                                                        "type": "string",
-                                                        "description": "Prefix to match."
-                                                    },
-                                                    "action": {
-                                                        "type": "string",
-                                                        "enum": ["accept", "reject"],
-                                                        "description": "Action when matched. ('accept', or 'reject')"
-                                                    },
-                                                    "match_type": {
-                                                        "type": "string",
-                                                        "enum": ["strict", "loose"],
-                                                        "description": "Strict matching or loose matching. ('strict', or 'loose') Strict matching only matches the exact matching entry while the loose match also matches the subnets."
-                                                    }
-                                                },
-                                                "required": ["prefix", "action", "match_type"]
-                                            }
-                                        }
-                                    }
-                                },
-                                "out_filters": {
-                                    "type": "object",
-                                    "description": "Egress route filter for this neighbor.",
-                                    "properties": {
-                                        "default_action": {
-                                            "type": "string",
-                                            "enum": ["accept", "reject"],
-                                            "description": "Default action of the filter. ('accept', or 'reject')"
-                                        },
-                                        "filters": {
-                                            "type": "array",
-                                            "additionalItems": false,
-                                            "items": {
-                                                "title": "filter",
-                                                "type": "object",
-                                                "description": "A filter object define a filter rule.",
-                                                "properties": {
-                                                    "prefix": {
-                                                        "type": "string",
-                                                        "description": "Prefix to match."
-                                                    },
-                                                    "action": {
-                                                        "type": "string",
-                                                        "enum": ["accept", "reject"],
-                                                        "description": "Action when matched. ('accept', or 'reject')"
-                                                    },
-                                                    "match_type": {
-                                                        "type": "string",
-                                                        "enum": ["strict", "loose"],
-                                                        "description": "Strict matching or loose matching. ('strict', or 'loose') Strict matching only matches the exact matching entry while the loose match also matches the subnets."
-                                                    }
-                                                },
-                                                "required": ["prefix", "action", "match_type"]
-                                            }
-                                        }
-                                    }
-                                },
-                                "passive": {
-                                    "type": "boolean",
-                                    "description": "Is this a passive session?"
-                                }
-                            },
-                            "required": ["address", "asn", "local_asn"]
-                        }
-                    },
-                    "routes": {
-                        "type": "array",
-                        "additionalItems": false,
-                        "description": "List of routes to install to NLRI.",
-                        "items": {
-                            "title": "route",
-                            "type": "object",
-                            "description": "A route object represents a route.",
-                            "properties": {
-                                "prefix": {
-                                    "type": "string",
-                                    "description": "The prefix of this route in CIDR notation."
-                                },
-                                "nexthop": {
-                                    "type": "string",
-                                    "description": "IP address of the nexthop."
-                                }
-                            },
-                            "required": ["prefix", "nexthop"]
-                        }
-                    },
-                    "applications": {
-                        "type": "array",
-                        "description": "List of additional applications to be install on the router.",
-                        "additionalItems": false,
-                        "items": {
-                            "title": "application",
-                            "type": "object",
-                            "description": "An application object represents an application.",
-                            "properties": {
-                                "type": {
-                                    "type": "string",
-                                    "enum": ["ping"]
-                                }
-                            },
-                            "dependencies": {
-                                "type": {
-                                    "oneOf": [
-                                        {
-                                            "properties": {
-                                                "type": {
-                                                    "enum": [
-                                                        "ping"
-                                                    ]
-                                                },
-                                                "remote": {
-                                                    "description": "Address of remote host to ping.",
-                                                    "type": "string"
-                                                },
-                                                "interval": {
-                                                    "description": "Time in millisecond to wait between ping.",
-                                                    "type": "integer"
-                                                },
-                                                "size": {
-                                                    "description": "The number of data bytes to be sent, real packet will be 8 (ICMP) + 20 (IP) bytes longer.",
-                                                    "type": "integer"
-                                                }
-                                            },
-                                            "required": ["remote"]
-                                        }
-                                    ]
-                                }
-                            }
-                        }
-                    }
-                },
-                "required": ["id", "instance_id", "router_id"]
-            }
+          }
         }
+      },
+      "networks": {
+        "type": "array",
+        "additionalItems": false,
+        "description": "List of networks in the simulation.",
+        "items": {
+          "title": "network",
+          "type": "object",
+          "description": "A network object defines a CSMA network.",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "A globally unique string that serves as the identifier for the network."
+            },
+            "instance_id": {
+              "type": "string",
+              "description": "The ID of the instance that this network belongs to. If such an ID does not exist, a new instance will be created."
+            },
+            "prefix": {
+              "type": "string",
+              "description": "Network prefix for this network in CIDR notation. (Optional, not used, for readability only.)"
+            },
+            "tap": {
+              "type": "object",
+              "description": "A TAP object specifies the configuration of a TapBridge.",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "ConfigureLocal",
+                    "UseLocal",
+                    "UseBridge"
+                  ],
+                  "description": "Mode of the TapBridge to use. (ConfigureLocal, UseLocal, or, UseBridge)"
+                }
+              },
+              "dependencies": {
+                "mode": {
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "The name of the TAP interface."
+                    },
+                    "address": {
+                      "type": "string",
+                      "description": "IPv4 address of the Tap Interface in CIDR notation."
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "address"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "id",
+            "instance_id"
+          ]
+        }
+      },
+      "routers": {
+        "type": "array",
+        "additionalItems": false,
+        "description": "List of routers in the simulation.",
+        "items": {
+          "title": "router",
+          "type": "object",
+          "description": "A router object define a Node.",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "A globally unique string that serves as the identifier for the router."
+            },
+            "instance_id": {
+              "type": "string",
+              "description": "The ID of the instance that this router belongs to. If such an ID does not exist, a new instance will be created."
+            },
+            "router_id": {
+              "type": "string",
+              "description": "The BGP ID of tis router."
+            },
+            "libbgp_loglevel": {
+              "type": "string",
+              "enum": [
+                "FATAL",
+                "ERROR",
+                "WARN",
+                "INFO",
+                "DEBUG"
+              ],
+              "default": "INFO",
+              "description": "Log level of libbgp."
+            },
+            "devices": {
+              "type": "array",
+              "additionalItems": false,
+              "description": "List of network devices to attach to this router.",
+              "items": {
+                "title": "device",
+                "type": "object",
+                "description": "A device object represents a NetDevice.",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "default",
+                      "p2p"
+                    ],
+                    "description": "Type of the device. A default device connects to a network, while a p2p network connects to a router.",
+                    "default": "default"
+                  },
+                  "id": {
+                    "type": "string",
+                    "description": "A locally unique string that serves as the identifier for this net device."
+                  }
+                },
+                "required": [
+                  "id",
+                  "type"
+                ],
+                "dependencies": {
+                  "type": {
+                    "oneOf": [
+                      {
+                        "properties": {
+                          "type": {
+                            "enum": [
+                              "default"
+                            ]
+                          },
+                          "network": {
+                            "type": "string",
+                            "description": "ID of the network to connect to."
+                          },
+                          "addresses": {
+                            "type": "array",
+                            "additionalItems": false,
+                            "description": "List of addresses on this device.",
+                            "items": {
+                              "title": "address",
+                              "type": "string",
+                              "description": "Address in CIDR format."
+                            }
+                          }
+                        },
+                        "required": [
+                          "network",
+                          "addresses"
+                        ]
+                      },
+                      {
+                        "properties": {
+                          "type": {
+                            "enum": [
+                              "p2p"
+                            ]
+                          },
+                          "peer": {
+                            "type": "string",
+                            "description": "ID of the peer to connect to."
+                          },
+                          "addresses": {
+                            "type": "array",
+                            "additionalItems": false,
+                            "description": "List of addresses on this device.",
+                            "items": {
+                              "title": "address",
+                              "type": "string",
+                              "description": "Address in CIDR format."
+                            }
+                          }
+                        },
+                        "required": [
+                          "peer",
+                          "addresses"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "peers": {
+              "type": "array",
+              "additionalItems": false,
+              "description": "List of BGP neighbors of this router.",
+              "items": {
+                "title": "peer",
+                "type": "object",
+                "description": "A Peer object represents a BGP neighbor.",
+                "properties": {
+                  "address": {
+                    "type": "string",
+                    "description": "IP address of the neighbor."
+                  },
+                  "local_asn": {
+                    "type": "integer",
+                    "description": "The ASN of local router."
+                  },
+                  "asn": {
+                    "type": "integer",
+                    "description": "ASN of the neighbor"
+                  },
+                  "in_filters": {
+                    "type": "object",
+                    "description": "Ingress route filter for this neighbor.",
+                    "properties": {
+                      "default_action": {
+                        "type": "string",
+                        "enum": [
+                          "accept",
+                          "reject"
+                        ],
+                        "description": "Default action of the filter. (accept, or reject)"
+                      },
+                      "filters": {
+                        "type": "array",
+                        "additionalItems": false,
+                        "items": {
+                          "title": "filter",
+                          "type": "object",
+                          "description": "A filter object define a filter rule.",
+                          "properties": {
+                            "filter_type": {
+                              "type": "string",
+                              "description": "Type of the target.",
+                              "default": "prefix",
+                              "enum": [
+                                "prefix",
+                                "asn",
+                                "community"
+                              ]
+                            },
+                            "action": {
+                              "type": "string",
+                              "description": "Action to take on rule matched.",
+                              "enum": [
+                                "accept",
+                                "reject"
+                              ]
+                            }
+                          },
+                          "dependencies": {
+                            "filter_type": {
+                              "oneOf": [
+                                {
+                                  "properties": {
+                                    "filter_type": {
+                                      "enum": [
+                                        "prefix"
+                                      ]
+                                    },
+                                    "prefix": {
+                                      "type": "string",
+                                      "description": "Prefix to match."
+                                    },
+                                    "match_type": {
+                                      "type": "string",
+                                      "description": "Type of matching.",
+                                      "enum": [
+                                        "M_EQ",
+                                        "M_NE",
+                                        "M_GT",
+                                        "M_LT",
+                                        "M_GE",
+                                        "M_LE"
+                                      ],
+                                      "default": "M_EQ"
+                                    }
+                                  },
+                                  "required": [
+                                    "prefix"
+                                  ]
+                                },
+                                {
+                                  "properties": {
+                                    "filter_type": {
+                                      "enum": [
+                                        "asn"
+                                      ]
+                                    },
+                                    "asn": {
+                                      "type": "integer",
+                                      "description": "ASN to match."
+                                    },
+                                    "match_type": {
+                                      "type": "string",
+                                      "description": "Type of matching.",
+                                      "enum": [
+                                        "M_HAS_ASN",
+                                        "M_NOT_HAS_ASN",
+                                        "M_FROM_ASN",
+                                        "M_NOT_FROM_ASN"
+                                      ],
+                                      "default": "M_HAS_ASN"
+                                    }
+                                  },
+                                  "required": [
+                                    "asn"
+                                  ]
+                                },
+                                {
+                                  "properties": {
+                                    "filter_type": {
+                                      "enum": [
+                                        "community"
+                                      ]
+                                    },
+                                    "community": {
+                                      "type": "string",
+                                      "description": "Community to match (xxxx:yyyy)."
+                                    },
+                                    "match_type": {
+                                      "type": "string",
+                                      "description": "Type of matching.",
+                                      "enum": [
+                                        "M_HAS_COMMUNITY",
+                                        "M_NOT_HAS_COMMUNITY"
+                                      ],
+                                      "default": "M_HAS_COMMUNITY"
+                                    }
+                                  },
+                                  "required": [
+                                    "community"
+                                  ]
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "filter_type",
+                            "match_type",
+                            "action"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "out_filters": {
+                    "type": "object",
+                    "description": "Egress route filter for this neighbor.",
+                    "properties": {
+                      "default_action": {
+                        "type": "string",
+                        "enum": [
+                          "accept",
+                          "reject"
+                        ],
+                        "description": "Default action of the filter. (accept, or reject)"
+                      },
+                      "filters": {
+                        "type": "array",
+                        "additionalItems": false,
+                        "items": {
+                          "title": "filter",
+                          "type": "object",
+                          "description": "A filter object define a filter rule.",
+                          "properties": {
+                            "filter_type": {
+                              "type": "string",
+                              "description": "Type of the target.",
+                              "default": "prefix",
+                              "enum": [
+                                "prefix",
+                                "asn",
+                                "community"
+                              ]
+                            },
+                            "action": {
+                              "type": "string",
+                              "description": "Action to take on rule matched.",
+                              "enum": [
+                                "accept",
+                                "reject"
+                              ]
+                            }
+                          },
+                          "dependencies": {
+                            "filter_type": {
+                              "oneOf": [
+                                {
+                                  "properties": {
+                                    "filter_type": {
+                                      "enum": [
+                                        "prefix"
+                                      ]
+                                    },
+                                    "prefix": {
+                                      "type": "string",
+                                      "description": "Prefix to match."
+                                    },
+                                    "match_type": {
+                                      "type": "string",
+                                      "description": "Type of matching.",
+                                      "enum": [
+                                        "M_EQ",
+                                        "M_NE",
+                                        "M_GT",
+                                        "M_LT",
+                                        "M_GE",
+                                        "M_LE"
+                                      ],
+                                      "default": "M_EQ"
+                                    }
+                                  },
+                                  "required": [
+                                    "prefix"
+                                  ]
+                                },
+                                {
+                                  "properties": {
+                                    "filter_type": {
+                                      "enum": [
+                                        "asn"
+                                      ]
+                                    },
+                                    "asn": {
+                                      "type": "integer",
+                                      "description": "ASN to match."
+                                    },
+                                    "match_type": {
+                                      "type": "string",
+                                      "description": "Type of matching.",
+                                      "enum": [
+                                        "M_HAS_ASN",
+                                        "M_NOT_HAS_ASN",
+                                        "M_FROM_ASN",
+                                        "M_NOT_FROM_ASN"
+                                      ],
+                                      "default": "M_HAS_ASN"
+                                    }
+                                  },
+                                  "required": [
+                                    "asn"
+                                  ]
+                                },
+                                {
+                                  "properties": {
+                                    "filter_type": {
+                                      "enum": [
+                                        "community"
+                                      ]
+                                    },
+                                    "community": {
+                                      "type": "string",
+                                      "description": "Community to match (xxxx:yyyy)."
+                                    },
+                                    "match_type": {
+                                      "type": "string",
+                                      "description": "Type of matching.",
+                                      "enum": [
+                                        "M_HAS_COMMUNITY",
+                                        "M_NOT_HAS_COMMUNITY"
+                                      ],
+                                      "default": "M_HAS_COMMUNITY"
+                                    }
+                                  },
+                                  "required": [
+                                    "community"
+                                  ]
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "filter_type",
+                            "match_type",
+                            "action"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "passive": {
+                    "type": "boolean",
+                    "description": "Is this a passive session?"
+                  }
+                },
+                "required": [
+                  "address",
+                  "asn",
+                  "local_asn"
+                ]
+              }
+            },
+            "routes": {
+              "type": "array",
+              "additionalItems": false,
+              "description": "List of routes to install to NLRI.",
+              "items": {
+                "title": "route",
+                "type": "object",
+                "description": "A route object represents a route.",
+                "properties": {
+                  "prefix": {
+                    "type": "string",
+                    "description": "The prefix of this route in CIDR notation."
+                  },
+                  "nexthop": {
+                    "type": "string",
+                    "description": "IP address of the nexthop."
+                  }
+                },
+                "required": [
+                  "prefix",
+                  "nexthop"
+                ]
+              }
+            },
+            "applications": {
+              "type": "array",
+              "description": "List of additional applications to be install on the router.",
+              "additionalItems": false,
+              "items": {
+                "title": "application",
+                "type": "object",
+                "description": "An application object represents an application.",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "ping"
+                    ]
+                  }
+                },
+                "dependencies": {
+                  "type": {
+                    "oneOf": [
+                      {
+                        "properties": {
+                          "type": {
+                            "enum": [
+                              "ping"
+                            ]
+                          },
+                          "remote": {
+                            "description": "Address of remote host to ping.",
+                            "type": "string"
+                          },
+                          "interval": {
+                            "description": "Time in millisecond to wait between ping.",
+                            "type": "integer"
+                          },
+                          "size": {
+                            "description": "The number of data bytes to be sent, real packet will be 8 (ICMP) + 20 (IP) bytes longer.",
+                            "type": "integer"
+                          }
+                        },
+                        "required": [
+                          "remote"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "required": [
+            "id",
+            "instance_id",
+            "router_id"
+          ]
+        }
+      }
     }
-}
+  }
+  
