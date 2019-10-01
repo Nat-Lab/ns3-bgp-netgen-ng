@@ -271,7 +271,7 @@ var NetGen = (function () {
         code.print('#include "ns3/core-module.h"');
         //code.print('#include "ns3/csma-module.h"');
         code.print('#include "ns3/internet-module.h"');
-        code.print('#include "ns3/bgp-helper.h"');
+        code.print('#include "ns3/bgp.h"');
         code.print('#include "ns3/ipv4-address.h"');
         code.print('#include "ns3/drop-tail-queue.h"');
         //code.print('#include "ns3/fd-net-device-module.h"');
