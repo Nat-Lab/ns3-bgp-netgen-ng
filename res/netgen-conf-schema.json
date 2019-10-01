@@ -78,13 +78,14 @@
               "type": "object",
               "description": "A Distributed Bridge object specifies the configuration of a DistBridge.",
               "properties": {
-                "enabled": {
-                  "type": "boolean",
-                  "description": "Enable DistBridge?"
+                "mode": {
+                  "type": "string",
+                  "description": "Mode of the TapBridge to use.",
+                  "enum": ["TCP"]
                 }
               },
               "dependencies": {
-                "enabled": {
+                "mode": {
                   "properties": {
                     "server": {
                       "type": "string",
@@ -103,7 +104,7 @@
                     }
                   },
                   "required": ["server", "port", "network_id"]
-                } 
+                }
               }
             }
           },

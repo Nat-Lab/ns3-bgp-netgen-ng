@@ -33,6 +33,11 @@
                 "mode": {
                     "ui:placeholder": "Disabled"
                 }
+            },
+            "dist_bridge": {
+                "mode": {
+                    "ui:placeholder": "Disabled"
+                }
             }
         }
     }
