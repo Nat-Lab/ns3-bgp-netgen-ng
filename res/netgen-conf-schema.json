@@ -4,6 +4,44 @@
     "title": "ns3-bgp-netgen-ng",
     "type": "object",
     "properties": {
+      "generator_options": {
+        "type": "object",
+        "description": "The generator_options object specify options for the script generator.",
+        "properties": {
+          "mac_assigment_mode": {
+            "type": "string",
+            "description": "Specify how MAC addresses of NetDevices in simulation should be assigned.",
+            "enum": ["incremental", "random"],
+            "default": "incremental"
+          }
+        },
+        "dependencies": {
+          "mac_assigment_mode": {
+            "oneOf": [
+              {
+                "properties": {
+                  "mac_assigment_mode": {
+                    "enum": ["random"]
+                  },
+                  "prefix": {
+                    "type": "string",
+                    "description": "Prefix of the randomly generated MAC addresses.",
+                    "default": "54:52:00"
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "mac_assigment_mode": {
+                    "enum": ["incremental"]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "required": ["mac_assigment_mode"]
+      },
       "options": {
         "type": "object",
         "description": "The options object specify options for the simulation.",

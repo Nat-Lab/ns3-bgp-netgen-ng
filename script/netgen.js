@@ -45,11 +45,25 @@ var NetGen = (function () {
     };
 
     /* MAC address allocator */
-    var EUI48AddressGenerator = function () {
+    var EUI48AddressGenerator = function (mode, prefix) {
         var counter = 1;
-        return function () {
-            return ('00'.repeat(6) + (counter++).toString(16)).slice(-12).match(/../g).join(':');
-        };
+    
+        if (mode == "incremental" || !mode) {
+            return function () {
+                return ('00'.repeat(6) + (counter++).toString(16)).slice(-12).match(/../g).join(':');
+            };
+        }
+        
+        if (mode == "random") {
+            return function() {
+                var rslt = prefix || '54:52:00';
+                for (var i = 0; i < 6; i++) {
+                    if (i%2 === 0) rslt += ':';
+                    rslt += Math.floor(Math.random()*16).toString(16);
+                }
+                return rslt;
+            };
+        }
     };
 
     const djv_env = new djv();
@@ -230,9 +244,10 @@ var NetGen = (function () {
     var generate = function (conf) {
         var preprocess_rslt = preprocess(conf);
         if (!preprocess_rslt.ok) return preprocess_rslt;
+        if (!conf.generator_options) conf.generator_options = {};
 
         var code = new Printer();
-        var eui48 = EUI48AddressGenerator();
+        var eui48 = EUI48AddressGenerator(conf.generator_options.mac_assigment_mode, conf.generator_options.prefix);
         var {instances, ghosts, socketpair_names, includes} = preprocess_rslt;
 
         var generate_dev_config = function(network, node, device, addrs, type) {

@@ -1,4 +1,9 @@
 {
+    "generator_options": {
+        "prefix": {
+            "ui:placeholder": "54:52:00"
+        }
+    },
     "routers": {
         "items": {
             "peers": {
