@@ -306,39 +306,43 @@ var NetGen = (function () {
             });
         }
 
-        code.print('// begin socketpairs init.');
-        socketpair_names.forEach(name => {
-            code.print(`int ${name}[2];`);
-            code.print(`if (socketpair (AF_UNIX, SOCK_DGRAM, 0, ${name}) < 0) {`);
-            code.indent();
-            code.print('fprintf(stderr, "socketpair() failed: %s\\n", strerror(errno));');
-            code.print('return 1;');
-            code.unindent();
-            code.print('}');
-        });
-        code.print('// end socketpairs init.');
-
+        if (socketpair_names.length > 0) {
+            code.print('// begin socketpairs init.');
+            socketpair_names.forEach(name => {
+                code.print(`int ${name}[2];`);
+                code.print(`if (socketpair (AF_UNIX, SOCK_DGRAM, 0, ${name}) < 0) {`);
+                code.indent();
+                code.print('fprintf(stderr, "socketpair() failed: %s\\n", strerror(errno));');
+                code.print('return 1;');
+                code.unindent();
+                code.print('}');
+            });
+            code.print('// end socketpairs init.');
+        }
+        
         code.print('InternetStackHelper internet;');
         if (use_tap) code.print('TapBridgeHelper tapBridge;')
-        code.print('pid_t pid;');
+        if (instances.length > 1) code.print('pid_t pid;');
 
         instances.forEach(instance => {
-            code.print('pid = fork();');
-            code.print('if (pid < 0) {');
-            code.indent();
-            code.print('fprintf(stderr, "fork() failed: %s\\n", strerror(errno));');
-            code.print('return 1;');
-            code.unindent();
-            code.print('}');
-
-            code.print('if (pid > 0)');
-            code.indent();
-            code.print(`fprintf(stderr, "started instance ${instance}, pid: %d.\\n", pid);`);
-            code.unindent();
-
             code.print(`// begin instance ${instance} setup.`);
-            code.print('if (pid == 0) {');
-            code.indent();
+            if (instances.length > 1) {
+                code.print('pid = fork();');
+                code.print('if (pid < 0) {');
+                code.indent();
+                code.print('fprintf(stderr, "fork() failed: %s\\n", strerror(errno));');
+                code.print('return 1;');
+                code.unindent();
+                code.print('}');
+
+                code.print('if (pid > 0)');
+                code.indent();
+                code.print(`fprintf(stderr, "started instance ${instance}, pid: %d.\\n", pid);`);
+                code.unindent();
+
+                code.print('if (pid == 0) {');
+                code.indent();
+            }
 
             code.print('// begin nets setup.');
             if (conf.networks) conf.networks.filter(net => net.instance_id == instance).forEach(net => {
@@ -411,8 +415,8 @@ var NetGen = (function () {
                 code.print(`${bgp_app}->SetAttribute("RouterID", Ipv4AddressValue("${router.router_id}"));`);
                 code.print(`${bgp_app}->SetAttribute("LibbgpLogLevel", EnumValue(libbgp::${router.libbgp_loglevel}));`);
 
-                code.print(`// begin router ${router.id} bgp peer setup.`);
                 if (router.peers) {
+                    code.print(`// begin router ${router.id} bgp peer setup.`);
                     router.peers.forEach((peer, peer_id) => {
                         var peer_name = `${bgp_app}_peer_${peer_id}`;
                         code.print(`Peer ${peer_name};`);
@@ -444,28 +448,28 @@ var NetGen = (function () {
 
                         code.print(`${bgp_app}->AddPeer(${peer_name});`);
                     });
+                    code.print(`// end router ${router.id} bgp peer setup.`);
                 }
-                code.print(`// end router ${router.id} bgp peer setup.`);
-
-                code.print(`// begin router ${router.id} bgp nlri setup.`);
+                
                 if (router.routes) {
+                    code.print(`// begin router ${router.id} bgp nlri setup.`);
                     router.routes.forEach(route => {
                         var [address, netmask] = route.prefix.split('/');
                         code.print(`${bgp_app}->AddRoute("${address}", Ipv4Mask("/${netmask}"), "${route.nexthop}");`);
                     });
+                    code.print(`// end router ${router.id} bgp nlri setup.`);
                 }
-                code.print(`// end router ${router.id} bgp nlri setup.`);
-
+                
                 code.print(`${router_name}->AddApplication(${bgp_app});`);
                 code.print(`// end router ${router.id} bgp setup.`);
-                code.print(`// begin router ${router.id} app setup.`);
                 if (router.applications) {
+                    code.print(`// begin router ${router.id} app setup.`);
                     router.applications.forEach((app, appid) => {
                         switch (app.type) {
                             case 'ping':
                                 if (!app.interval) app.interval = 1000;
                                 if (!app.size) app.size = 56;
-                                var appname = `app_${router.id}_${appid} `;
+                                var appname = `app_${router.id}_${appid}`;
                                 code.print(`Ptr<V4Ping> ${appname} = CreateObject<V4Ping> ();`);
                                 code.print(`${appname}->SetAttribute ("Remote", Ipv4AddressValue (Ipv4Address("${app.remote}")));`);
                                 code.print(`${appname}->SetAttribute ("Verbose", BooleanValue (true));`);
@@ -474,21 +478,27 @@ var NetGen = (function () {
                                 code.print(`${router_name}->AddApplication(${appname});`); 
                         }
                     });
+                    code.print(`// end router ${router.id} app setup.`);
                 }
-                code.print(`// end router ${router.id} app setup.`);
                 code.print(`// end router ${router.id} setup.`);
             });
             code.print('// end routers.');
 
-            code.print(`// setting up ghost for instance ${instance}`);
             var ghost_node = `ghost_${instance}`;
-            code.print(`Ptr<Node> ${ghost_node} = CreateObject<Node> ();`);
-            code.print(`internet.Install(${ghost_node});`);
-            code.print(`// setting up ghost bridges for instance ${instance}`);
-            ghosts.filter(ghost => ghost.instance_id == instance)
+            var ghost_brs = ghosts.filter(ghost => ghost.instance_id == instance)
                 .map(ghost => ghost.network)
-                .filter((v, i, s) => s.indexOf(v) == i)
-                .forEach(net => {
+                .filter((v, i, s) => s.indexOf(v) == i);
+            var ghost_fdcsma = ghosts.filter(ghost => ghost.instance_id == instance);
+
+            if (ghost_brs.length > 0 || ghost_fdcsma.length > 0) {
+                code.print(`// setting up ghost for instance ${instance}`);
+                code.print(`Ptr<Node> ${ghost_node} = CreateObject<Node> ();`);
+                code.print(`internet.Install(${ghost_node});`);
+            }
+
+            if (ghost_brs.length > 0) {
+                code.print(`// setting up ghost bridges for instance ${instance}`);
+                ghost_brs.forEach(net => {
                     var ghost_dev_br = `br_${net}`;
                     code.print(`Ptr<BridgeNetDevice> ${ghost_dev_br} = CreateObject<BridgeNetDevice> ();`);
                     code.print(`${ghost_node}->AddDevice(${ghost_dev_br});`);
@@ -500,30 +510,44 @@ var NetGen = (function () {
                     code.print(`${ghost_dev_csma}->Attach(net_${net});`);
                     code.print(`${ghost_dev_br}->AddBridgePort(${ghost_dev_csma});`);
                 });
-            code.print(`// end ghost bridges setup for instance ${instance}`);
-            code.print(`// setting up fd <--> csma connection for instance ${instance}`);
-            ghosts.filter(ghost => ghost.instance_id == instance).forEach(ghost => {
-                var ghost_dev_fd = `dev_${ghost.name}_fd`;
-                var ghost_dev_br = `br_${ghost.network}`;
-                code.print(`Ptr<FdNetDevice> ${ghost_dev_fd} = CreateObject<FdNetDevice> ();`);
-                code.print(`${ghost_dev_fd}->SetFileDescriptor(${ghost.fd});`);
-                code.print(`${ghost_node}->AddDevice(${ghost_dev_fd});`);
-                code.print(`${ghost_dev_br}->AddBridgePort(${ghost_dev_fd});`);
-            });
-            code.print(`// end fd <--> csma connection setup for instance ${instance}`);
+                code.print(`// end ghost bridges setup for instance ${instance}`);
+            }
+
+            if (ghost_fdcsma.length > 0) {            
+                code.print(`// setting up fd <--> csma connection for instance ${instance}`);
+                ghosts.filter(ghost => ghost.instance_id == instance).forEach(ghost => {
+                    var ghost_dev_fd = `dev_${ghost.name}_fd`;
+                    var ghost_dev_br = `br_${ghost.network}`;
+                    code.print(`Ptr<FdNetDevice> ${ghost_dev_fd} = CreateObject<FdNetDevice> ();`);
+                    code.print(`${ghost_dev_fd}->SetFileDescriptor(${ghost.fd});`);
+                    code.print(`${ghost_node}->AddDevice(${ghost_dev_fd});`);
+                    code.print(`${ghost_dev_br}->AddBridgePort(${ghost_dev_fd});`);
+                });
+                code.print(`// end fd <--> csma connection setup for instance ${instance}`);
+            }
+            if (ghost_brs.length > 0 || ghost_fdcsma.length > 0)
+                code.print(`// end ghost setup for instance ${instance}`);
 
             code.print('Simulator::Run();');
             code.print('return 0;');
-            code.unindent();
-            code.print('}');
+
+            if (instances.length > 1) {
+                code.unindent();
+                code.print('}');
+            }
+
             code.print(`// end instance ${instance}.`);
         });
 
-        code.print(`fprintf(stderr, "Simulation ready. Instances started: ${instances.join(', ')} (${instances.length})\\n");`);
-        code.print('wait(NULL);');
-        code.print('return 0;');
+        if (instances.length > 1) {
+            code.print(`fprintf(stderr, "Simulation ready. Instances started: ${instances.join(', ')} (${instances.length} instances)\\n");`);
+            code.print('wait(NULL);');
+            code.print('return 0;');
+        }
+        
         code.unindent();
         code.print('}');
+
         return {ok: true, code: code.get().join('\n')};
     };
 
