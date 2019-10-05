@@ -118,7 +118,7 @@
               "properties": {
                 "mode": {
                   "type": "string",
-                  "description": "Mode of the TapBridge to use.",
+                  "description": "Mode of the DistributedBridge to use.",
                   "enum": ["TCP"]
                 }
               },
