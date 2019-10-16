@@ -99,11 +99,11 @@ var NetGen = (function () {
                         errors.push(`Invalid TAP address "${network.tap.address}" at ${path}.tap.`); 
                 }
 
-                if (network.dist_bridge && network.dist_bridge.mode) {
+                /*if (network.dist_bridge && network.dist_bridge.mode) {
                     includes.add('ns3/distributed-bridge-helper.h');
                     if(!r_ipv4.test(network.dist_bridge.server))
                         errors.push(`Invalid DistServer IP: "${network.dist_bridge.server}" at ${path}.dist_bridge.`)
-                }
+                }*/
 
                 if (instances.every(id => id != network.instance_id))
                     instances.push(network.instance_id);
@@ -148,6 +148,14 @@ var NetGen = (function () {
                                 errors.push(`Invalid address "${address}" for "${device.id}" at ${__path}.`); 
                             });
                         }
+
+                        if (device.type == 'remote') {
+                            includes.add('ns3/remote-net-device.h');
+                            if (!r_ipv4.test(device.server)) {
+                                errors.push(`Invalid address "${device.server}" for "${device.id}" at ${__path}.`);
+                            }
+                        }
+
                         if (device.type == 'p2p') {
                             /* p2p device configured by peer, skip */
                             if (device.set_by_peer) return;
@@ -258,6 +266,10 @@ var NetGen = (function () {
                 code.print(`Ptr<FdNetDevice> ${device_name} = CreateObject<FdNetDevice> ();`);
                 code.print(`${device_name}->SetFileDescriptor (${network});`);
             }
+            if (type == 'remote') {
+                code.print(`Ptr<RemoteNetDevice> ${device_name} = CreateObject<RemoteNetDevice> ();`);
+                code.print(`${device_name}->Attach ("${network.server}", ${network.port}, ${network.network});`)
+            }
             if (type == 'p2p') {
                 code.print(`Ptr<PointToPointNetDevice> ${device_name} = CreateObject<PointToPointNetDevice> ();`);
                 code.print(`${device_name}->SetDataRate (DataRate (0xffffffff));`);
@@ -360,7 +372,7 @@ var NetGen = (function () {
                     code.print(`tapBridge.Install (${tap_name}, ${dev_info.real_name});`);
                     code.print(`// end tap for net ${net.id}.`);
                 }
-                if (net.dist_bridge && net.dist_bridge.mode) {
+                /*if (net.dist_bridge && net.dist_bridge.mode) {
                     var dist_name = `dist_${net.id}`;
                     code.print(`// begin dist_bridge for net ${net.id}.`);
                     code.print(`Ptr<Node> ${dist_name} = CreateObject<Node> ();`);
@@ -370,7 +382,7 @@ var NetGen = (function () {
                     code.print(`DistributedBridgeHelper disthelp_${net.id} ("${net.dist_bridge.server}", ${net.dist_bridge.port}, ${net.dist_bridge.network_id});`);
                     code.print(`disthelp_${net.id}.Install(${dist_name}, ${dev_info.real_name});`);
                     code.print(`// end dist_bridge for net ${net.id}.`);
-                }
+                }*/
             });
             code.print('// end nets.');
 
@@ -399,7 +411,9 @@ var NetGen = (function () {
 
                             dev_info = generate_dev_config(device.p2p_channel, router_name, device.id, device.addresses, 'p2p');
                         }
-                            
+                        
+                        if (device.type == 'remote')
+                            dev_info = generate_dev_config(device, router_name, device.id, device.addresses, 'remote');
 
                         if (device.type == 'default' && !device.xnet) 
                             dev_info = generate_dev_config(`net_${device.network}`, router_name, device.id, device.addresses, 'csma');
