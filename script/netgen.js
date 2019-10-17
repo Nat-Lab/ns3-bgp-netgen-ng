@@ -268,7 +268,7 @@ var NetGen = (function () {
             }
             if (type == 'remote') {
                 code.print(`Ptr<RemoteNetDevice> ${device_name} = CreateObject<RemoteNetDevice> ();`);
-                code.print(`${device_name}->Attach ("${network.server}", ${network.port}, ${network.network});`)
+                code.print(`${device_name}->SetRemote ("${network.server}", ${network.port}, ${network.network});`)
             }
             if (type == 'p2p') {
                 code.print(`Ptr<PointToPointNetDevice> ${device_name} = CreateObject<PointToPointNetDevice> ();`);
@@ -283,7 +283,7 @@ var NetGen = (function () {
             code.print(`int32_t devid_${device_name} = ipv4_${node}->AddInterface (${device_name});`);
             addrs.forEach(addr => {
                 var [address, netmask] = addr.split('/');
-                code.print(`ipv4_${node}->AddAddress(devid_${device_name}, Ipv4InterfaceAddress (Ipv4Address ("${address}"), Ipv4Mask ("/${netmask}")));`);
+                code.print(`ipv4_${node}->AddAddress(devid_${device_name}, Ipv4InterfaceAddress ("${address}", "/${netmask}"));`);
             });
             code.print(`ipv4_${node}->SetMetric (devid_${device_name}, 1);`);
             code.print(`ipv4_${node}->SetUp (devid_${device_name});`);
