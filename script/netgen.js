@@ -71,6 +71,7 @@ var NetGen = (function () {
 
     /* preprocess: checking / metadata collect */
     var preprocess = function (conf) {
+        use_tap = false;
         var includes = new Includes();
 
         var err = djv_env.validate('netgen-conf', conf);
@@ -333,7 +334,7 @@ var NetGen = (function () {
         }
         
         code.print('InternetStackHelper internet;');
-        if (use_tap) code.print('TapBridgeHelper tapBridge;')
+        if (use_tap) code.print('TapBridgeHelper tapBridge;');
         if (instances.length > 1) code.print('pid_t pid;');
 
         instances.forEach(instance => {
@@ -438,6 +439,7 @@ var NetGen = (function () {
                         code.print(`${peer_name}.peer_asn = ${peer.asn};`);
                         code.print(`${peer_name}.local_asn = ${peer.local_asn};`);
                         code.print(`${peer_name}.passive = ${peer.passive ? "true" : "false"};`);
+                        if (peer.allow_local_as) code.print(`${peer_name}.allow_local_as = ${peer.allow_local_as};`);
                         
                         if (peer.in_filters) {
                             var def_act = peer.in_filters.default_action;

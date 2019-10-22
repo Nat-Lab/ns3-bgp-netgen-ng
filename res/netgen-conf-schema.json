@@ -300,6 +300,10 @@
                     "type": "integer",
                     "description": "ASN of the neighbor"
                   },
+                  "allow_local_as": {
+                    "type": "integer",
+                    "description": "Number of local ASNs allowed in the AS_PATH."
+                  },
                   "in_filters": {
                     "type": "object",
                     "description": "Ingress route filter for this neighbor.",
