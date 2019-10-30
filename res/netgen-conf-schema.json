@@ -300,10 +300,6 @@
                     "type": "integer",
                     "description": "ASN of the neighbor"
                   },
-                  "allow_local_as": {
-                    "type": "integer",
-                    "description": "Number of local ASNs allowed in the AS_PATH."
-                  },
                   "in_filters": {
                     "type": "object",
                     "description": "Ingress route filter for this neighbor.",
@@ -574,9 +570,35 @@
                       }
                     }
                   },
-                  "passive": {
-                    "type": "boolean",
-                    "description": "Is this a passive session?"
+                  "options": {
+                    "type": "object",
+                    "description": "Options for this BGP session.",
+                    "properties": {
+                      "allow_local_as": {
+                        "type": "integer",
+                        "description": "Number of local ASNs allowed in the AS_PATH."
+                      },
+                      "weight": {
+                        "type": "integer",
+                        "description": "Weight of this peering session."
+                      },
+                      "passive": {
+                        "type": "boolean",
+                        "description": "Is this a passive session?"
+                      },
+                      "no_nexthop_check": {
+                        "type": "boolean",
+                        "description": "Disable nexthop validation."
+                      },
+                      "forced_default_nexthop": {
+                        "type": "boolean",
+                        "description": "Always use the peering IP as nexthop."
+                      },
+                      "ibgp_alter_nexthop": {
+                        "type": "boolean",
+                        "description": "Alter IBGP nexthop attribute the same way as EBGP."
+                      }
+                    }
                   }
                 },
                 "required": [

@@ -438,8 +438,18 @@ var NetGen = (function () {
                         code.print(`${peer_name}.peer_address = "${peer.address}";`);
                         code.print(`${peer_name}.peer_asn = ${peer.asn};`);
                         code.print(`${peer_name}.local_asn = ${peer.local_asn};`);
-                        code.print(`${peer_name}.passive = ${peer.passive ? "true" : "false"};`);
-                        if (peer.allow_local_as) code.print(`${peer_name}.allow_local_as = ${peer.allow_local_as};`);
+
+                        if (peer.options) {
+                            var options = peer.options;
+                            if (options.allow_local_as) code.print(`${peer_name}.allow_local_as = ${options.allow_local_as};`);
+                            if (options.weight) code.print(`${peer_name}.weight = ${options.weight};`);
+                            if (options.passive === true) code.print(`${peer_name}.passive = true;`);
+                            if (options.no_nexthop_check === true) code.print(`${peer_name}.no_nexthop_check = true;`);
+                            if (options.forced_default_nexthop === true) code.print(`${peer_name}.forced_default_nexthop = true;`);
+                            if (options.ibgp_alter_nexthop === true) code.print(`${peer_name}.ibgp_alter_nexthop = true;`);
+                        }
+
+
                         
                         if (peer.in_filters) {
                             var def_act = peer.in_filters.default_action;

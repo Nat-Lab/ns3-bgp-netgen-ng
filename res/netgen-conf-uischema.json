@@ -8,9 +8,6 @@
         "items": {
             "peers": {
                 "items": {
-                    "allow_local_as": {
-                        "ui:placeholder": "0"
-                    },
                     "in_filters": {
                         "default_action": {
                             "ui:placeholder": "default (accept)"
@@ -19,6 +16,14 @@
                     "out_filters": {
                         "default_action": {
                             "ui:placeholder": "default (accept)"
+                        }
+                    },
+                    "options": {
+                        "allow_local_as": {
+                            "ui:placeholder": "0"
+                        },
+                        "weight": {
+                            "ui:placeholder": "0"
                         }
                     }
                 }
