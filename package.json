@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node_modules/.bin/webpack-dev-server --config webpack.dev.js --mode development --open",
     "build": "node_modules/.bin/webpack --config webpack.prod.js --mode production",
-    "serve": "node_modules/.bin/http-server ./dist"
+    "serve": "node_modules/.bin/http-server ./dist",
+    "build-cli": "babel ./script -d ./cli-dist && echo 'Done. use \"node cli-dist/netgen-cli.js\" to invoke cli.'"
   },
   "repository": {
     "type": "git",
@@ -30,7 +31,8 @@
     "react-jsonschema-form": "^1.5.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.4.4",
+    "@babel/cli": "^7.6.4",
+    "@babel/core": "^7.6.4",
     "@babel/preset-env": "^7.4.4",
     "@babel/preset-react": "^7.0.0",
     "babel-loader": "^8.0.6",
